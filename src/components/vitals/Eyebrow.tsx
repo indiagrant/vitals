@@ -14,7 +14,7 @@ export function Eyebrow({
   return (
     <span
       className={cn(
-        "font-mono text-[10px] uppercase tracking-[0.14em]",
+        "font-mono text-[12px] uppercase tracking-[0.14em]",
         tone === "muted" && "text-muted-foreground",
         tone === "sage"  && "text-sage",
         tone === "clay"  && "text-clay",

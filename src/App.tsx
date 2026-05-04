@@ -6,6 +6,9 @@ import { Eyebrow } from "@/components/vitals/Eyebrow";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+import { SprintView } from "@/pages/SprintView";
+import { PlaceholderView } from "@/pages/PlaceholderView";
+
 import { VITALS_EMPLOYEES, vitalsEmployee } from "@/data/mockData";
 import type { ViewRole } from "@/types";
 
@@ -40,38 +43,63 @@ export default function App() {
           onSprintChange={setSprint}
         />
 
-        <main className="flex-1 px-10 py-8">
-          <div>
-            <Eyebrow className="mb-3 block">Welcome to Vitals</Eyebrow>
-            <h1 className="text-3xl font-semibold tracking-tight mb-3">
-              The shell is up. Build views into the placeholder below.
-            </h1>
-            <p className="text-sm text-muted-foreground max-w-xl mb-8">
-              The sidebar nav, sprint pager, and user switcher all work. Replace
-              this <code className="font-mono text-xs">&lt;main&gt;</code> content
-              with your <code className="font-mono text-xs">&lt;SprintView /&gt;</code>,{" "}
-              <code className="font-mono text-xs">&lt;TeamOverview /&gt;</code>, etc.
-            </p>
+        <main className="flex-1 px-10 py-8 flex flex-col gap-10">
+          {/* Employee views */}
+          {role === "employee" && view === "sprint" && (
+            <SprintView employee={employee} sprint={sprint} />
+          )}
+          {role === "employee" && view === "checkin" && (
+            <PlaceholderView
+              title="Submit your sprint check-in"
+              description="Six dimensions, takes 90 seconds. Lands here when built."
+            />
+          )}
+          {role === "employee" && view === "patterns" && (
+            <PlaceholderView
+              title="Patterns across your sprints"
+              description="Trends in how each dimension has moved over time."
+            />
+          )}
+          {role === "employee" && view === "retro" && (
+            <PlaceholderView
+              title="Retro prep"
+              description="Lightweight notes you can take into your team retro."
+            />
+          )}
+          {role === "employee" && view === "history" && (
+            <PlaceholderView
+              title="History"
+              description="Your past check-ins and reflections."
+            />
+          )}
 
-            <Card>
-              <CardContent className="flex flex-wrap items-center gap-4">
-                <Eyebrow>Dev-only</Eyebrow>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setRole(role === "employee" ? "admin" : "employee")}
-                >
-                  Switch to {role === "employee" ? "Admin" : "Employee"} view
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  Currently:{" "}
-                  <span className="font-medium text-foreground">{role}</span>
-                  {" · "}view: <span className="font-mono">{view}</span>
-                  {" · "}sprint: <span className="font-mono">{sprint}</span>
-                </span>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Admin views — placeholders for now */}
+          {role === "admin" && (
+            <PlaceholderView
+              title={`Admin · ${view}`}
+              description="Admin views land in a later milestone."
+            />
+          )}
+
+          {/* Dev-only role + state inspector */}
+          <Card className="mt-auto">
+            <CardContent className="flex flex-wrap items-center gap-4">
+              <Eyebrow>Dev-only</Eyebrow>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRole(role === "employee" ? "admin" : "employee")}
+              >
+                Switch to {role === "employee" ? "Admin" : "Employee"} view
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Currently:{" "}
+                <span className="font-medium text-foreground">{role}</span>
+                {" · "}view: <span className="font-mono">{view}</span>
+                {" · "}sprint: <span className="font-mono">{sprint}</span>
+              </span>
+            </CardContent>
+          </Card>
         </main>
       </div>
     </div>
