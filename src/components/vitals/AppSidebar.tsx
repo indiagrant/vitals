@@ -37,7 +37,7 @@ const EMPLOYEE_NAV: Array<{ id: EmployeeNavId; label: string; icon: React.Compon
   { id: "history",  label: "History",    icon: History },
 ];
 
-const ADMIN_NAV: Array<{ id: AdminNavId; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+export const ADMIN_NAV: Array<{ id: AdminNavId; label: string; icon: React.ComponentType<{ className?: string }> }> = [
   { id: "team",          label: "Team overview",  icon: Users },
   { id: "dimensions",    label: "By dimension",   icon: BarChart3 },
   { id: "sprint-health", label: "Sprint health",  icon: Activity },
@@ -45,12 +45,41 @@ const ADMIN_NAV: Array<{ id: AdminNavId; label: string; icon: React.ComponentTyp
   { id: "settings",      label: "Settings",       icon: Settings },
 ];
 
+function NavButton({
+  id,
+  label,
+  icon: Icon,
+  active,
+  onClick,
+}: {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      key={id}
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-left transition-colors cursor-pointer",
+        active
+          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-xs"
+          : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      <Icon className="size-4 shrink-0" />
+      {label}
+    </button>
+  );
+}
+
 export function AppSidebar({ role, view, onViewChange, employee, employees, onEmployeeChange }: AppSidebarProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
-  const items = role === "admin" ? ADMIN_NAV : EMPLOYEE_NAV;
 
   return (
-    <aside className="bg-sidebar border-r border-sidebar-border flex flex-col gap-6 px-4 py-5 w-60 shrink-0 sticky top-0 self-start h-screen">
+    <aside className="bg-sidebar border-r border-sidebar-border flex flex-col gap-6 px-4 py-5 w-60 shrink-0 h-full overflow-y-auto">
       <div className="flex items-center gap-2">
         <div className="size-6 rounded-md bg-sage text-primary-foreground grid place-items-center text-[13px] font-semibold leading-none">
           <span className="translate-x-[1.5px] translate-y-[0.5px]">v</span>
@@ -64,26 +93,33 @@ export function AppSidebar({ role, view, onViewChange, employee, employees, onEm
       </div>
 
       <nav className="flex flex-col gap-0.5">
-        {items.map((item) => {
-          const active = view === item.id;
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              onClick={() => onViewChange(item.id)}
-              className={cn(
-                "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-left transition-colors cursor-pointer",
-                active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Icon className="size-4 shrink-0" />
-              {item.label}
-            </button>
-          );
-        })}
+        {EMPLOYEE_NAV.map((item) => (
+          <NavButton
+            key={item.id}
+            id={item.id}
+            label={item.label}
+            icon={item.icon}
+            active={view === item.id}
+            onClick={() => onViewChange(item.id)}
+          />
+        ))}
       </nav>
+
+      {role === "admin" && (
+        <nav className="flex flex-col gap-0.5">
+          <Eyebrow className="px-2.5 pb-1.5">Admin</Eyebrow>
+          {ADMIN_NAV.map((item) => (
+            <NavButton
+              key={item.id}
+              id={item.id}
+              label={item.label}
+              icon={item.icon}
+              active={view === item.id}
+              onClick={() => onViewChange(item.id)}
+            />
+          ))}
+        </nav>
+      )}
 
       <div className="mt-auto flex flex-col gap-2.5">
         <Eyebrow>{role === "admin" ? "Signed in as" : "You"}</Eyebrow>

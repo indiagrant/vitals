@@ -15,6 +15,7 @@ export interface Employee {
   role: string;
   initials: string;
   tenure: string;
+  isAdmin?: boolean; // has access to the Admin section, in addition to their own employee pages
 }
 
 export interface Dimension {

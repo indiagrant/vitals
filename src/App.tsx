@@ -2,9 +2,6 @@ import { useState, useEffect } from "react";
 
 import { AppSidebar, type NavId } from "@/components/vitals/AppSidebar";
 import { TopBar } from "@/components/vitals/TopBar";
-import { Eyebrow } from "@/components/vitals/Eyebrow";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 import { SprintView } from "@/pages/SprintView";
 import { PlaceholderView } from "@/pages/PlaceholderView";
@@ -14,19 +11,21 @@ import { VITALS_EMPLOYEES, vitalsEmployee } from "@/data/mockData";
 import type { ViewRole } from "@/types";
 
 export default function App() {
-  const [role, setRole] = useState<ViewRole>("employee");
   const [employeeId, setEmployeeId] = useState<string>("E001");
   const [view, setView] = useState<NavId>("sprint");
   const [sprint, setSprint] = useState<string>("S24");
 
-  useEffect(() => {
-    setView(role === "admin" ? "team" : "sprint");
-  }, [role]);
-
   const employee = vitalsEmployee(employeeId)!;
+  const role: ViewRole = employee.isAdmin ? "admin" : "employee";
+
+  // Every user (admin or not) lands on their own Sprint page first —
+  // admin-only views are opt-in via the sidebar's Admin section.
+  useEffect(() => {
+    setView("sprint");
+  }, [employeeId]);
 
   return (
-    <div className="min-h-screen w-screen flex bg-background text-foreground">
+    <div className="h-screen w-screen flex overflow-hidden bg-background text-foreground">
       <AppSidebar
         role={role}
         view={view}
@@ -36,72 +35,51 @@ export default function App() {
         onEmployeeChange={setEmployeeId}
       />
 
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col overflow-y-auto">
         <TopBar
-          role={role}
+          view={view}
           employee={employee}
           sprint={sprint}
           onSprintChange={setSprint}
         />
 
         <main className="flex-1 px-10 py-8 flex flex-col gap-10">
-          {/* Employee views */}
-          {role === "employee" && view === "sprint" && (
-            <SprintView employee={employee} sprint={sprint} />
-          )}
-          {role === "employee" && view === "checkin" && (
+          {/* Employee pages — available to everyone, admins included */}
+          {view === "sprint" && <SprintView employee={employee} sprint={sprint} />}
+          {view === "checkin" && (
             <PlaceholderView
               title="Submit your sprint check-in"
               description="Six dimensions, takes 90 seconds. Lands here when built."
             />
           )}
-          {role === "employee" && view === "patterns" && (
+          {view === "patterns" && (
             <PlaceholderView
               title="Patterns across your sprints"
               description="Trends in how each dimension has moved over time."
             />
           )}
-          {role === "employee" && view === "retro" && (
+          {view === "retro" && (
             <PlaceholderView
               title="Retro prep"
               description="Lightweight notes you can take into your team retro."
             />
           )}
-          {role === "employee" && view === "history" && (
+          {view === "history" && (
             <PlaceholderView
               title="History"
               description="Your past check-ins and reflections."
             />
           )}
 
-          {/* Admin views — Team overview is built, the rest are placeholders */}
+          {/* Admin-only pages — Team overview is built, the rest are placeholders */}
           {role === "admin" && view === "team" && <TeamOverviewView />}
-          {role === "admin" && view !== "team" && (
-            <PlaceholderView
-              title={`Admin · ${view}`}
-              description="Admin views land in a later milestone."
-            />
-          )}
-
-          {/* Dev-only role + state inspector */}
-          <Card className="mt-auto">
-            <CardContent className="flex flex-wrap items-center gap-4">
-              <Eyebrow>Dev-only</Eyebrow>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setRole(role === "employee" ? "admin" : "employee")}
-              >
-                Switch to {role === "employee" ? "Admin" : "Employee"} view
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                Currently:{" "}
-                <span className="font-medium text-foreground">{role}</span>
-                {" · "}view: <span className="font-mono">{view}</span>
-                {" · "}sprint: <span className="font-mono">{sprint}</span>
-              </span>
-            </CardContent>
-          </Card>
+          {role === "admin" &&
+            (view === "dimensions" || view === "sprint-health" || view === "trend" || view === "settings") && (
+              <PlaceholderView
+                title={`Admin · ${view}`}
+                description="Admin views land in a later milestone."
+              />
+            )}
         </main>
       </div>
     </div>

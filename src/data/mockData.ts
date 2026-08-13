@@ -13,7 +13,7 @@ export const VITALS_EMPLOYEES: Employee[] = [
   { id: "E003", name: "Priya Raman",   role: "Staff Engineer",      initials: "PR", tenure: "5y" },
   { id: "E004", name: "Lukas Berg",    role: "Engineer",            initials: "LB", tenure: "8mo" },
   { id: "E005", name: "Sofia Marín",   role: "Senior Engineer",     initials: "SM", tenure: "2y" },
-  { id: "E006", name: "Jordan Reeves", role: "Engineering Manager", initials: "JR", tenure: "4y" },
+  { id: "E006", name: "Jordan Reeves", role: "Engineering Manager", initials: "JR", tenure: "4y", isAdmin: true },
   { id: "E007", name: "Aiko Tanaka",   role: "Engineer",            initials: "AT", tenure: "1.5y" },
 ];
 

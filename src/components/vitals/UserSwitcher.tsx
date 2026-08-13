@@ -42,7 +42,14 @@ export function UserSwitcher({ open, onOpenChange, currentId, employees, onPick 
                   {e.initials}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-medium">{e.name}</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px] font-medium truncate">{e.name}</span>
+                    {e.isAdmin && (
+                      <span className="font-mono text-[9px] tracking-[0.1em] uppercase bg-foreground text-background px-1.5 py-0.5 rounded shrink-0">
+                        Admin
+                      </span>
+                    )}
+                  </div>
                   <div className="text-[11px] text-muted-foreground">{e.role}</div>
                 </div>
                 <span className="font-mono text-[11px] text-muted-foreground">{avg.toFixed(1)}</span>
