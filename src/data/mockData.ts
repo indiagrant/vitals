@@ -28,12 +28,12 @@ export const SPRINT_DATES: Record<string, string> = {
 };
 
 export const VITALS_DIMENSIONS: Dimension[] = [
-  { key: "workLifeBalance",   label: "Work-life balance",  short: "Balance"      },
-  { key: "communication",     label: "Communication",      short: "Comms"        },
-  { key: "managerSupport",    label: "Manager support",    short: "Support"      },
-  { key: "teamCollaboration", label: "Team collaboration", short: "Collab"       },
-  { key: "workload",          label: "Workload",           short: "Workload"     },
-  { key: "jobSatisfaction",   label: "Job satisfaction",   short: "Satisfaction" },
+  { key: "workLifeBalance",   label: "Work-life balance",  short: "Balance",      question: "How was your work-life balance?" },
+  { key: "communication",     label: "Communication",      short: "Comms",        question: "How connected did you feel with the team?" },
+  { key: "managerSupport",    label: "Manager support",    short: "Support",      question: "Did you feel supported by your manager?" },
+  { key: "teamCollaboration", label: "Team collaboration", short: "Collab",       question: "How was working with the team?" },
+  { key: "workload",          label: "Workload",           short: "Workload",     question: "How manageable was your workload?" },
+  { key: "jobSatisfaction",   label: "Job satisfaction",   short: "Satisfaction", question: "How satisfied did you feel with your work?" },
 ];
 
 export const VITALS_SURVEYS: Record<string, Record<string, HealthMetrics>> = {
@@ -267,6 +267,29 @@ export function vitalsTrend(empId: string, dim: keyof HealthMetrics): number[] {
   return VITALS_SPRINTS.map((s) => VITALS_SURVEYS[empId][s][dim]);
 }
 
+// Mutates the shared mock store directly — there's no backend yet, so this
+// is how a Check-in submission "writes" data. Existing read-only views
+// (Sprint, Team overview) already read VITALS_SURVEYS/VITALS_REFLECTIONS
+// fresh on every render, so they pick this up on their next render with no
+// extra wiring.
+export function submitCheckIn(
+  empId: string,
+  sprint: string,
+  metrics: HealthMetrics,
+  win: string,
+  pain: string,
+): void {
+  if (!VITALS_SURVEYS[empId]) VITALS_SURVEYS[empId] = {};
+  VITALS_SURVEYS[empId][sprint] = metrics;
+
+  const existing = VITALS_REFLECTIONS[empId] ?? { wins: [], pains: [], prompts: [] };
+  VITALS_REFLECTIONS[empId] = {
+    ...existing,
+    wins: win ? [{ tag: "check-in", title: win, detail: "" }, ...existing.wins] : existing.wins,
+    pains: pain ? [{ tag: "check-in", title: pain, detail: "" }, ...existing.pains] : existing.pains,
+  };
+}
+
 // ─── Teams (admin · Team overview) ─────────────────────────────────────────
 //
 // Engineering's check-ins are the real S24 per-employee averages from
@@ -278,7 +301,11 @@ export function vitalsTrend(empId: string, dim: keyof HealthMetrics): number[] {
 // individual's check-in) rather than derived, to keep DimensionBar's
 // integer-scale rendering valid.
 
-export const VITALS_TEAMS: Team[] = [
+// A function, not a static array — Engineering's checkins are derived from
+// VITALS_SURVEYS, so this needs to recompute on every call to pick up a
+// check-in submitted since the module first loaded (see submitCheckIn above).
+export function getVitalsTeams(): Team[] {
+  return [
   {
     id: "eng",
     name: "Engineering",
@@ -365,4 +392,5 @@ export const VITALS_TEAMS: Team[] = [
       jobSatisfaction:   [3, 3],
     },
   },
-];
+  ];
+}

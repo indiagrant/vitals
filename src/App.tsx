@@ -4,6 +4,7 @@ import { AppSidebar, type NavId } from "@/components/vitals/AppSidebar";
 import { TopBar } from "@/components/vitals/TopBar";
 
 import { SprintView } from "@/pages/SprintView";
+import { CheckInView } from "@/pages/CheckInView";
 import { PlaceholderView } from "@/pages/PlaceholderView";
 import { TeamOverviewView } from "@/pages/TeamOverviewView";
 
@@ -47,10 +48,7 @@ export default function App() {
           {/* Employee pages — available to everyone, admins included */}
           {view === "sprint" && <SprintView employee={employee} sprint={sprint} />}
           {view === "checkin" && (
-            <PlaceholderView
-              title="Submit your sprint check-in"
-              description="Six dimensions, takes 90 seconds. Lands here when built."
-            />
+            <CheckInView employee={employee} sprint={sprint} onDone={() => setView("sprint")} />
           )}
           {view === "patterns" && (
             <PlaceholderView

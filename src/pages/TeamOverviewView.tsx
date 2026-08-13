@@ -2,7 +2,7 @@ import { useState } from "react";
 import { TeamMonitorCard } from "@/components/vitals/TeamMonitorCard";
 import { TeamDiagnostics } from "@/components/vitals/TeamDiagnostics";
 import { orgAverage, teamScore } from "@/lib/teamPulse";
-import { VITALS_TEAMS } from "@/data/mockData";
+import { getVitalsTeams } from "@/data/mockData";
 
 /**
  * Admin "Team overview" — each team's pulse trace is built from real
@@ -11,21 +11,22 @@ import { VITALS_TEAMS } from "@/data/mockData";
  */
 export function TeamOverviewView() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = VITALS_TEAMS.find((t) => t.id === selectedId) ?? null;
+  const teams = getVitalsTeams();
+  const selected = teams.find((t) => t.id === selectedId) ?? null;
 
   if (selected) {
     return <TeamDiagnostics team={selected} onBack={() => setSelectedId(null)} />;
   }
 
-  const totalPeople = VITALS_TEAMS.reduce((s, t) => s + t.checkins.length, 0);
-  const needAttention = VITALS_TEAMS.filter((t) => teamScore(t) <= 2.8).length;
-  const org = orgAverage(VITALS_TEAMS);
+  const totalPeople = teams.reduce((s, t) => s + t.checkins.length, 0);
+  const needAttention = teams.filter((t) => teamScore(t) <= 2.8).length;
+  const org = orgAverage(teams);
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-2 flex-wrap text-[13px] text-muted-foreground">
         <span>
-          <b className="text-foreground font-semibold">{VITALS_TEAMS.length}</b> teams
+          <b className="text-foreground font-semibold">{teams.length}</b> teams
         </span>
         <span className="opacity-50">·</span>
         <span>
@@ -46,7 +47,7 @@ export function TeamOverviewView() {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {VITALS_TEAMS.map((team) => (
+        {teams.map((team) => (
           <TeamMonitorCard key={team.id} team={team} onSelect={setSelectedId} />
         ))}
       </div>

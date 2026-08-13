@@ -91,7 +91,9 @@ pnpm dlx shadcn@latest add badge dialog dropdown-menu
 
 ## Next up
 
-- **Check-in form** — submit a new survey
+- **Check-in form** — the actual data entry point that feeds the Sprint page (six dimensions + wins/pains). Nothing writes to `mockData.ts` yet — Check-in is still a placeholder.
 - **Patterns** view — sentiment trends across sprints
-- **Admin views** — team overview, by-dimension, sprint-health rollup
-- Replace the dev-only role toggle with proper auth/routing
+- **Retro prep** view — talking points synthesized from a check-in, for the actual retro meeting
+- **History** view — browse past check-ins
+- **Admin views** — Team overview is built; by-dimension, sprint-health, sentiment-trend, and settings are still placeholders
+- **Team initialization (admin)** — admin sets each team's retro cadence: a start date plus weekly/bi-weekly/monthly recurrence. Employees should get notified a few days before their check-in window opens. No team-creation flow exists yet; this depends on it.

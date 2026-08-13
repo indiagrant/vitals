@@ -13,7 +13,7 @@ import {
   trendGlyph,
   trendTone,
 } from "@/lib/teamPulse";
-import { VITALS_DIMENSIONS, VITALS_TEAMS } from "@/data/mockData";
+import { VITALS_DIMENSIONS, getVitalsTeams } from "@/data/mockData";
 import type { Team } from "@/types";
 
 interface TeamDiagnosticsProps {
@@ -27,7 +27,7 @@ export function TeamDiagnostics({ team, onBack }: TeamDiagnosticsProps) {
   const tone = toneForScore(score);
   const status = statusForScore(score);
   const tTone = trendTone(trend);
-  const org = orgAverage(VITALS_TEAMS);
+  const org = orgAverage(getVitalsTeams());
 
   return (
     <div className="flex flex-col gap-8">

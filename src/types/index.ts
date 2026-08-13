@@ -22,6 +22,7 @@ export interface Dimension {
   key: keyof HealthMetrics;
   label: string;
   short: string;
+  question: string; // warm phrasing used on the Check-in form
 }
 
 // ─── Sprint / ticket types ─────────────────────────────────────────────────
