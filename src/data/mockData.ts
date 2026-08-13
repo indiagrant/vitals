@@ -3,6 +3,7 @@ import type {
   Employee,
   EmployeeReflection,
   HealthMetrics,
+  Team,
   Ticket,
 } from "@/types";
 
@@ -265,3 +266,103 @@ export function vitalsEmployee(id: string): Employee | undefined {
 export function vitalsTrend(empId: string, dim: keyof HealthMetrics): number[] {
   return VITALS_SPRINTS.map((s) => VITALS_SURVEYS[empId][s][dim]);
 }
+
+// ─── Teams (admin · Team overview) ─────────────────────────────────────────
+//
+// Engineering's check-ins are the real S24 per-employee averages from
+// VITALS_SURVEYS above — not hand-picked numbers — so the team score here
+// (3.7) matches the Engineering team average shown on the Sprint page.
+// Design / Sales / Customer Support are invented in the same shape, to show
+// the "Team overview" concept generalizes past a single team. The six-
+// dimension breakdown per team is hand-set (whole numbers, like an
+// individual's check-in) rather than derived, to keep DimensionBar's
+// integer-scale rendering valid.
+
+export const VITALS_TEAMS: Team[] = [
+  {
+    id: "eng",
+    name: "Engineering",
+    pod: "Platform pod",
+    prevAvg: vitalsTeamAvg("S23"),
+    checkins: VITALS_EMPLOYEES.map((e) => ({
+      name: e.name,
+      initials: e.initials,
+      score: vitalsEmpAvg(e.id, "S24"),
+    })),
+    dims: {
+      workLifeBalance:   [3, 3],
+      communication:     [4, 4],
+      managerSupport:    [3, 3],
+      teamCollaboration: [5, 4],
+      workload:          [3, 3],
+      jobSatisfaction:   [4, 4],
+    },
+  },
+  {
+    id: "design",
+    name: "Design",
+    pod: "Product design",
+    prevAvg: 4.3,
+    checkins: [
+      { name: "Naomi Osei",    initials: "NO", score: 4.8 },
+      { name: "Elena Vasquez", initials: "EV", score: 4.6 },
+      { name: "Theo Brandt",   initials: "TB", score: 4.3 },
+      { name: "Marcus Webb",   initials: "MW", score: 4.3 },
+    ],
+    dims: {
+      workLifeBalance:   [4, 4],
+      communication:     [5, 5],
+      managerSupport:    [4, 4],
+      teamCollaboration: [5, 5],
+      workload:          [4, 3],
+      jobSatisfaction:   [5, 5],
+    },
+  },
+  {
+    id: "sales",
+    name: "Sales",
+    pod: "Revenue pod",
+    prevAvg: 3.4,
+    checkins: [
+      { name: "Chris Doyle",   initials: "CD", score: 3.9 },
+      { name: "Sam Ortiz",     initials: "SO", score: 3.8 },
+      { name: "Ryan Cole",     initials: "RC", score: 3.6 },
+      { name: "Nadia Farouk",  initials: "NF", score: 3.0 },
+      { name: "Wren Halloway", initials: "WH", score: 2.5 },
+      { name: "Beatrix Lang",  initials: "BL", score: 2.4 },
+    ],
+    dims: {
+      workLifeBalance:   [3, 3],
+      communication:     [3, 4],
+      managerSupport:    [4, 4],
+      teamCollaboration: [3, 3],
+      workload:          [3, 3],
+      jobSatisfaction:   [3, 4],
+    },
+  },
+  {
+    id: "support",
+    name: "Customer Support",
+    pod: "Frontline pod",
+    prevAvg: 3.0,
+    checkins: [
+      { name: "Callum Reid",     initials: "CR", score: 3.5 },
+      { name: "Dev Anand",       initials: "DA", score: 3.4 },
+      { name: "Petra Novak",     initials: "PN", score: 3.2 },
+      { name: "Amara Chukwu",    initials: "AC", score: 2.8 },
+      { name: "Grace Lindqvist", initials: "GL", score: 2.6 },
+      { name: "Femi Osayande",   initials: "FO", score: 2.2 },
+      { name: "Yuki Sato",       initials: "YS", score: 2.0 },
+      { name: "Isla Byrne",      initials: "IB", score: 2.0 },
+      { name: "Tomas Reyes",     initials: "TR", score: 1.8 },
+    ],
+    dims: {
+      workLifeBalance:   [2, 3],
+      communication:     [3, 3],
+      managerSupport:    [3, 3],
+      teamCollaboration: [3, 3],
+      workload:          [1, 2],
+      jobSatisfaction:   [3, 3],
+    },
+  },
+];

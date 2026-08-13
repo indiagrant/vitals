@@ -60,6 +60,23 @@ export interface EmployeeReflection {
   prompts: string[];
 }
 
+// ─── Team (admin) types ────────────────────────────────────────────────────
+
+export interface TeamCheckIn {
+  name: string;
+  initials: string;
+  score: number; // 1-5, this person's average across the six dimensions
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  pod: string;
+  prevAvg: number; // aggregate team score, previous sprint
+  checkins: TeamCheckIn[];
+  dims: Record<keyof HealthMetrics, [current: number, previous: number]>;
+}
+
 // ─── App-level types ───────────────────────────────────────────────────────
 
 export type ViewRole = "employee" | "admin";

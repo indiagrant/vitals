@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 
 import { SprintView } from "@/pages/SprintView";
 import { PlaceholderView } from "@/pages/PlaceholderView";
+import { TeamOverviewView } from "@/pages/TeamOverviewView";
 
 import { VITALS_EMPLOYEES, vitalsEmployee } from "@/data/mockData";
 import type { ViewRole } from "@/types";
@@ -73,8 +74,9 @@ export default function App() {
             />
           )}
 
-          {/* Admin views — placeholders for now */}
-          {role === "admin" && (
+          {/* Admin views — Team overview is built, the rest are placeholders */}
+          {role === "admin" && view === "team" && <TeamOverviewView />}
+          {role === "admin" && view !== "team" && (
             <PlaceholderView
               title={`Admin · ${view}`}
               description="Admin views land in a later milestone."
