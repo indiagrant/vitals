@@ -21,7 +21,7 @@ export function SprintPager({ sprint, onChange }: SprintPagerProps) {
       >
         <ChevronLeft className="size-3.5" />
       </PagerButton>
-      <div className="px-2.5 py-1.5 font-mono text-[11px] text-muted-foreground tracking-[0.06em] uppercase">
+      <div className="px-2.5 py-1.5 font-mono text-[14px] text-muted-foreground tracking-[0.06em] uppercase">
         Sprint {sprint.replace("S", "")} · {SPRINT_DATES[sprint]}
       </div>
       <PagerButton

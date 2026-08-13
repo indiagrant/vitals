@@ -50,10 +50,10 @@ export function AppSidebar({ role, view, onViewChange, employee, employees, onEm
   const items = role === "admin" ? ADMIN_NAV : EMPLOYEE_NAV;
 
   return (
-    <aside className="bg-sidebar border-r border-sidebar-border flex flex-col gap-6 px-4 py-5 w-60 shrink-0">
+    <aside className="bg-sidebar border-r border-sidebar-border flex flex-col gap-6 px-4 py-5 w-60 shrink-0 sticky top-0 self-start h-screen">
       <div className="flex items-center gap-2">
         <div className="size-6 rounded-md bg-sage text-primary-foreground grid place-items-center text-[13px] font-semibold leading-none">
-          v
+          <span className="translate-x-[1.5px] translate-y-[0.5px]">v</span>
         </div>
         <span className="text-base font-semibold tracking-tight">Vitals</span>
         {role === "admin" && (
@@ -95,8 +95,8 @@ export function AppSidebar({ role, view, onViewChange, employee, employees, onEm
             {employee.initials}
           </div>
           <div className="flex flex-col gap-px min-w-0 flex-1">
-            <span className="text-[13px] font-medium text-foreground truncate">{employee.name}</span>
-            <span className="text-[11px] text-muted-foreground truncate">{employee.role}</span>
+            <span className="text-[14px] font-semibold text-foreground truncate">{employee.name}</span>
+            <span className="text-[14px] text-muted-foreground truncate">{employee.role}</span>
           </div>
           <ChevronsUpDown className="size-3.5 text-muted-foreground shrink-0" />
         </button>
