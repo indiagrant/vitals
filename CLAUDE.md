@@ -4,6 +4,16 @@ A personal, prototype-phase team health app. No enterprise constraints — this
 file exists to keep design/dev decisions coherent across sessions, not to
 impose process for its own sake.
 
+## Docs and skills grow with the project
+
+This file and the README are living documents, not a fixed spec written once.
+As new areas of the app take shape, add sections here (or split into
+additional `.md` files) rather than letting context live only in chat
+history. Likewise, package up recurring workflows as skills once a pattern
+repeats rather than re-explaining it each session. Keep the README's
+"What's here" tree and "Next up" list in sync with what's actually shipped —
+stale docs are worse than no docs.
+
 ## Design/dev workflow: mock first, then translate
 
 New visual concepts and page-level features get prototyped as a self-contained
@@ -69,6 +79,45 @@ two roles (`employee`, `admin`) and each has its own nav (`AppSidebar`'s
   produces identical output for existing inputs) — but call this out
   explicitly rather than folding it in silently, since it's the one case
   where a "scoped" feature touches shared surface area.
+
+## Patterns page
+
+The employee "Patterns" nav item (`src/pages/PatternsView.tsx`) detects
+recurring shape across an employee's six dimension scores — stuck/steady
+plateaus, recovered dips, trending runs, inconsistent swings — and surfaces
+the ones worth noticing as signal cards above a full six-row sparkline grid.
+
+**Patterns vs. History — non-overlapping jobs.** Patterns and History are
+both employee nav items but must not duplicate each other:
+- **Patterns** — recurring *shape* across sprints, computed from the six
+  `HealthMetrics` dimensions. No wins/pains text, no ticket data, no
+  chronological reading.
+- **History** — chronological journal/diary of past check-ins (wins, pains,
+  prompts, tickets). Anything that reads as "scroll through what happened,
+  in order" belongs here, not in Patterns.
+
+If a feature idea is chronological/narrative, it belongs in History. If it's
+cross-sprint pattern detection on the numeric dimensions, it belongs in
+Patterns. Don't let History gain analytics, or Patterns gain a timeline —
+that duplicates the other page's job.
+
+**Bounded sprint window, not full history.** Patterns looks at a capped
+trailing window of sprints (`PATTERN_WINDOW_SPRINTS = 10` in
+`src/lib/patterns.ts`), not everything an employee has ever submitted.
+
+**Why:** an unbounded window would (a) duplicate History's job — "browse
+everything from the beginning" is History's, not Patterns' — (b) surface
+stale streaks that resolved long ago as if they were current, and (c)
+degrade sparkline legibility past what's actually readable at a glance.
+Pattern-detection rules only look 3-4 sprints deep to fire in the first
+place, so a wider window wouldn't change what gets detected — only how much
+irrelevant history surrounds it.
+
+**How to apply:** the window is a named constant that trims each dimension's
+trend to its trailing N sprints before running detection — not a UI toggle,
+not per-employee. The seed data (currently 5 sprints, `VITALS_SPRINTS` in
+`mockData.ts`) doesn't exercise the cap yet since it hasn't grown past 10 —
+the constant exists so behavior is already defined for when it does.
 
 ## Where things live
 
