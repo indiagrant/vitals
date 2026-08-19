@@ -145,6 +145,15 @@ pnpm dlx shadcn@latest add badge dialog dropdown-menu
 
 ## Next up
 
+- **Real persistence (local DB)** — everything today lives in memory only.
+  `mockData.ts`'s module-level objects (what Check-in writes into) reset on
+  every reload, and Retro prep's board doesn't even survive navigating away
+  from the page and back (see `RetroPrepView` — no `localStorage`, no
+  backend, state dies the moment the component unmounts). Plan is a local,
+  free-tier database (e.g. SQLite) that Check-in, History, and Retro prep
+  all read/write through, so a check-in, a retro board, and an employee's
+  history actually survive a reload or an app restart, not just the
+  current session.
 - **History** view — browse past check-ins
 - **Admin views** — Team overview is built; by-dimension, sprint-health, sentiment-trend, and settings are still placeholders
 - **Team initialization (admin)** — admin sets each team's retro cadence: a start date plus weekly/bi-weekly/monthly recurrence. Employees should get notified a few days before their check-in window opens. No team-creation flow exists yet; this depends on it.
