@@ -1,5 +1,5 @@
 import { ADMIN_NAV, type NavId } from "./AppSidebar";
-import { Eyebrow } from "./Eyebrow";
+import { TopBarIdentity } from "./TopBarIdentity";
 import { SprintPager } from "./SprintPager";
 import { getVitalsTeams } from "@/data/mockData";
 import { patternSprintWindow } from "@/lib/patterns";
@@ -24,11 +24,13 @@ export function TopBar({ view, employee, sprint, onSprintChange }: TopBarProps) 
 
   return (
     <div className="flex items-center justify-between px-10 py-4 border-b border-border bg-background sticky top-0 z-10">
-      <Eyebrow>
-        {isAdminView
-          ? `All teams · ${teams.length} teams · ${totalPeople} people`
-          : `${employee.name} · ${employee.role}`}
-      </Eyebrow>
+      <TopBarIdentity
+        label={
+          isAdminView
+            ? `All teams · ${teams.length} teams · ${totalPeople} people`
+            : `${employee.name} · ${employee.role}`
+        }
+      />
       {patternsWindow ? (
         <span className="font-mono text-[12px] uppercase tracking-[0.1em] text-muted-foreground">
           {patternsWindow[0]} → {patternsWindow[patternsWindow.length - 1]} · {patternsWindow.length} sprints

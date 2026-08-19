@@ -22,7 +22,7 @@ export function UserSwitcher({ open, onOpenChange, currentId, employees, onPick 
         onClick={(e) => e.stopPropagation()}
         className="bg-card border border-border rounded-xl p-5 w-[380px] max-h-[80%] overflow-auto shadow-2xl"
       >
-        <Eyebrow className="mb-3.5 block">Switch user · prototype</Eyebrow>
+        <Eyebrow className="mb-3.5 block">Switch user</Eyebrow>
         <div className="flex flex-col gap-1">
           {employees.map((e) => {
             const avg = vitalsEmpAvg(e.id);

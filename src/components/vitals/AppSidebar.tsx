@@ -122,7 +122,7 @@ export function AppSidebar({ role, view, onViewChange, employee, employees, onEm
       )}
 
       <div className="mt-auto flex flex-col gap-2.5">
-        <Eyebrow>{role === "admin" ? "Signed in as" : "You"}</Eyebrow>
+        <Eyebrow>{role === "admin" ? "Signed in as" : "Logged in as"}</Eyebrow>
         <button
           onClick={() => setPickerOpen(true)}
           className="flex items-center gap-2.5 p-2 rounded-lg border border-border bg-card hover:bg-accent/30 transition-colors text-left cursor-pointer"
