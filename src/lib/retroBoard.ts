@@ -164,6 +164,7 @@ export function tidyLayout(notes: StickyNote[]): StickyNote[] {
 
 export interface ClusterBox {
   key: string;
+  noteIds: string[];
   left: number;
   top: number;
   width: number;
@@ -220,6 +221,7 @@ export function computeClusters(notes: StickyNote[]): ClusterBox[] {
     const maxY = Math.max(...group.map((r) => r.y + r.h)) + 4;
     boxes.push({
       key: group.map((r) => r.id).sort().join("|"),
+      noteIds: group.map((r) => r.id),
       left: minX,
       top: minY,
       width: maxX - minX,

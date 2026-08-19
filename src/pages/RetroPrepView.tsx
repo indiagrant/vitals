@@ -11,6 +11,7 @@ import {
   newBlankNote,
   nextColor,
   tidyLayout,
+  type ClusterBox,
 } from "@/lib/retroBoard";
 import type { Employee, StickyNote as StickyNoteData } from "@/types";
 
@@ -63,10 +64,16 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
   const [agendaOpen, setAgendaOpen] = useState(false);
   const [copyLabel, setCopyLabel] = useState("Copy text");
   const [pendingFocusId, setPendingFocusId] = useState<string | null>(null);
+  const [groupDragKey, setGroupDragKey] = useState<string | null>(null);
 
   const boardRef = useRef<HTMLDivElement>(null);
   const agendaRef = useRef<HTMLTextAreaElement>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
+  const groupDragStart = useRef<{
+    clientX: number;
+    clientY: number;
+    members: Array<{ id: string; x: number; y: number }>;
+  } | null>(null);
 
   // A fresh board (with its own starting talking points) per employee/sprint —
   // mirrors how CheckInView / SprintView re-derive from mockData on prop change.
@@ -88,18 +95,54 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
 
   useEffect(() => {
     function handleMove(e: PointerEvent) {
-      if (!dragId) return;
       const board = boardRef.current;
       if (!board) return;
       const rect = board.getBoundingClientRect();
-      const x = clamp(e.clientX - rect.left - dragOffset.current.x, 0, Math.max(0, rect.width - NOTE_DRAG_W));
-      const y = clamp(e.clientY - rect.top - dragOffset.current.y, 0, Math.max(0, rect.height - NOTE_DRAG_H));
-      const xPct = (x / rect.width) * 100;
-      const yPct = (y / rect.height) * 100;
-      setNotes((prev) => prev.map((n) => (n.id === dragId ? { ...n, x: xPct, y: yPct } : n)));
+
+      if (dragId) {
+        const x = clamp(e.clientX - rect.left - dragOffset.current.x, 0, Math.max(0, rect.width - NOTE_DRAG_W));
+        const y = clamp(e.clientY - rect.top - dragOffset.current.y, 0, Math.max(0, rect.height - NOTE_DRAG_H));
+        const xPct = (x / rect.width) * 100;
+        const yPct = (y / rect.height) * 100;
+        setNotes((prev) => prev.map((n) => (n.id === dragId ? { ...n, x: xPct, y: yPct } : n)));
+        return;
+      }
+
+      if (groupDragKey && groupDragStart.current) {
+        const { clientX, clientY, members } = groupDragStart.current;
+        const noteWPct = (NOTE_DRAG_W / rect.width) * 100;
+        const noteHPct = (NOTE_DRAG_H / rect.height) * 100;
+        const rawDxPct = ((e.clientX - clientX) / rect.width) * 100;
+        const rawDyPct = ((e.clientY - clientY) / rect.height) * 100;
+
+        // Clamp the group's shared delta against the tightest member —
+        // keeps the whole cluster rigid (no relative shifting) while
+        // respecting the board edges as one unit.
+        let minDx = -Infinity;
+        let maxDx = Infinity;
+        let minDy = -Infinity;
+        let maxDy = Infinity;
+        members.forEach((m) => {
+          minDx = Math.max(minDx, -m.x);
+          maxDx = Math.min(maxDx, 100 - noteWPct - m.x);
+          minDy = Math.max(minDy, -m.y);
+          maxDy = Math.min(maxDy, 100 - noteHPct - m.y);
+        });
+        const dxPct = clamp(rawDxPct, minDx, maxDx);
+        const dyPct = clamp(rawDyPct, minDy, maxDy);
+
+        setNotes((prev) =>
+          prev.map((n) => {
+            const member = members.find((m) => m.id === n.id);
+            return member ? { ...n, x: member.x + dxPct, y: member.y + dyPct } : n;
+          }),
+        );
+      }
     }
     function handleUp() {
       setDragId(null);
+      setGroupDragKey(null);
+      groupDragStart.current = null;
     }
     window.addEventListener("pointermove", handleMove);
     window.addEventListener("pointerup", handleUp);
@@ -107,7 +150,7 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
       window.removeEventListener("pointermove", handleMove);
       window.removeEventListener("pointerup", handleUp);
     };
-  }, [dragId]);
+  }, [dragId, groupDragKey]);
 
   function handlePointerDownCard(e: ReactPointerEvent<HTMLDivElement>, note: StickyNoteData) {
     const board = boardRef.current;
@@ -119,6 +162,16 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
     };
     setNotes((prev) => [...prev.filter((n) => n.id !== note.id), note]);
     setDragId(note.id);
+  }
+
+  function handlePointerDownGroup(e: ReactPointerEvent<HTMLDivElement>, box: ClusterBox) {
+    const members = box.noteIds
+      .map((id) => notes.find((n) => n.id === id))
+      .filter((n): n is StickyNoteData => Boolean(n))
+      .map((n) => ({ id: n.id, x: n.x, y: n.y }));
+    if (members.length === 0) return;
+    groupDragStart.current = { clientX: e.clientX, clientY: e.clientY, members };
+    setGroupDragKey(box.key);
   }
 
   function handleAddNote() {
@@ -167,6 +220,9 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
     () => buildAgendaText(employee.name, sprint, notes),
     [employee.name, sprint, notes],
   );
+  // The count of what was auto-generated for this sprint specifically —
+  // not live notes.length, which also counts notes the user added/deleted.
+  const seedCount = useMemo(() => buildSeedNotes(employee.id, sprint).length, [employee.id, sprint]);
 
   const board = (
     <div
@@ -190,7 +246,11 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
       {clusters.map((box) => (
         <div
           key={box.key}
-          className="absolute z-0 rounded-[18px] border-2 border-dashed border-sage/40 bg-sage/5 transition-[left,top,width,height] duration-100"
+          onPointerDown={(e) => handlePointerDownGroup(e, box)}
+          className={cn(
+            "absolute z-0 rounded-[18px] border-2 border-dashed border-sage/40 bg-sage/5",
+            groupDragKey === box.key ? "cursor-grabbing" : "cursor-grab transition-[left,top,width,height] duration-100",
+          )}
           style={{ left: `${box.left}%`, top: `${box.top}%`, width: `${box.width}%`, height: `${box.height}%` }}
         >
           <input
@@ -243,8 +303,8 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
             <Eyebrow>Retro prep</Eyebrow>
             <h1 className="text-3xl font-semibold tracking-tight">Get your thoughts on the board.</h1>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Auto-pulled talking points from this sprint — drag them around, add your own, delete what
-              doesn&rsquo;t matter.
+              {seedCount} auto-generated talking point{seedCount === 1 ? "" : "s"} from this sprint. Drag
+              them around, add your own, group them up, delete what doesn&rsquo;t matter.
             </p>
           </div>
           <div className="flex shrink-0 items-start gap-2 pt-0.5">
