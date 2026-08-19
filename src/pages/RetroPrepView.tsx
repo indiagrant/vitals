@@ -32,6 +32,19 @@ const CORK_BACKGROUND_IMAGE = [
 const NOTE_DRAG_W = 236;
 const NOTE_DRAG_H = 168;
 
+// Can't shrink a cluster's scale-anchor box below this (percent of board) —
+// stops the resize from collapsing/inverting under the cursor.
+const MIN_RESIZE_PCT = 14;
+
+type ResizeCorner = "tl" | "tr" | "bl" | "br";
+
+const RESIZE_HANDLES: Array<{ corner: ResizeCorner; position: string; cursor: string }> = [
+  { corner: "tl", position: "-left-1.5 -top-1.5", cursor: "cursor-nwse-resize" },
+  { corner: "tr", position: "-right-1.5 -top-1.5", cursor: "cursor-nesw-resize" },
+  { corner: "bl", position: "-left-1.5 -bottom-1.5", cursor: "cursor-nesw-resize" },
+  { corner: "br", position: "-right-1.5 -bottom-1.5", cursor: "cursor-nwse-resize" },
+];
+
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
@@ -65,6 +78,7 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
   const [copyLabel, setCopyLabel] = useState("Copy text");
   const [pendingFocusId, setPendingFocusId] = useState<string | null>(null);
   const [groupDragKey, setGroupDragKey] = useState<string | null>(null);
+  const [resizeKey, setResizeKey] = useState<string | null>(null);
 
   const boardRef = useRef<HTMLDivElement>(null);
   const agendaRef = useRef<HTMLTextAreaElement>(null);
@@ -73,6 +87,12 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
     clientX: number;
     clientY: number;
     members: Array<{ id: string; x: number; y: number }>;
+  } | null>(null);
+  const resizeStart = useRef<{
+    corner: ResizeCorner;
+    anchorX: number; // percent, the fixed opposite corner the target rect grows/shrinks from
+    anchorY: number;
+    noteIds: string[]; // stable order, so the reflow grid doesn't jitter mid-drag
   } | null>(null);
 
   // A fresh board (with its own starting talking points) per employee/sprint —
@@ -137,12 +157,53 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
             return member ? { ...n, x: member.x + dxPct, y: member.y + dyPct } : n;
           }),
         );
+        return;
+      }
+
+      if (resizeKey && resizeStart.current) {
+        const { corner, anchorX, anchorY, noteIds } = resizeStart.current;
+        const noteWPct = (NOTE_DRAG_W / rect.width) * 100;
+        const noteHPct = (NOTE_DRAG_H / rect.height) * 100;
+        const pointerXPct = ((e.clientX - rect.left) / rect.width) * 100;
+        const pointerYPct = ((e.clientY - rect.top) / rect.height) * 100;
+
+        // Clustered notes start heavily overlapping (that's the clustering
+        // criterion), so their relative offsets from each other are tiny —
+        // scaling those tiny offsets, from any anchor, stays tiny. So this
+        // isn't a scale transform: dragging a corner defines a target
+        // rectangle (the opposite corner stays fixed), and every member note
+        // reflows into a simple grid that fills it, spacing them out for
+        // real regardless of where they started.
+        const rawWidth = Math.max(MIN_RESIZE_PCT, Math.abs(pointerXPct - anchorX));
+        const rawHeight = Math.max(MIN_RESIZE_PCT, Math.abs(pointerYPct - anchorY));
+        const targetLeft = corner === "tl" || corner === "bl" ? anchorX - rawWidth : anchorX;
+        const targetTop = corner === "tl" || corner === "tr" ? anchorY - rawHeight : anchorY;
+
+        const count = noteIds.length;
+        const cols = count <= 3 ? count : Math.ceil(Math.sqrt(count));
+        const rows = Math.ceil(count / cols);
+        const cellW = rawWidth / cols;
+        const cellH = rawHeight / rows;
+
+        setNotes((prev) =>
+          prev.map((note) => {
+            const idx = noteIds.indexOf(note.id);
+            if (idx === -1) return note;
+            const col = idx % cols;
+            const row = Math.floor(idx / cols);
+            const x = clamp(targetLeft + col * cellW + (cellW - noteWPct) / 2, 0, 100 - noteWPct);
+            const y = clamp(targetTop + row * cellH + (cellH - noteHPct) / 2, 0, 100 - noteHPct);
+            return { ...note, x, y };
+          }),
+        );
       }
     }
     function handleUp() {
       setDragId(null);
       setGroupDragKey(null);
       groupDragStart.current = null;
+      setResizeKey(null);
+      resizeStart.current = null;
     }
     window.addEventListener("pointermove", handleMove);
     window.addEventListener("pointerup", handleUp);
@@ -150,7 +211,7 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
       window.removeEventListener("pointermove", handleMove);
       window.removeEventListener("pointerup", handleUp);
     };
-  }, [dragId, groupDragKey]);
+  }, [dragId, groupDragKey, resizeKey]);
 
   function handlePointerDownCard(e: ReactPointerEvent<HTMLDivElement>, note: StickyNoteData) {
     const board = boardRef.current;
@@ -172,6 +233,19 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
     if (members.length === 0) return;
     groupDragStart.current = { clientX: e.clientX, clientY: e.clientY, members };
     setGroupDragKey(box.key);
+  }
+
+  function handlePointerDownResize(e: ReactPointerEvent<HTMLDivElement>, box: ClusterBox, corner: ResizeCorner) {
+    e.stopPropagation(); // don't also start a group-drag on the box beneath the handle
+    if (box.noteIds.length === 0) return;
+
+    resizeStart.current = {
+      corner,
+      anchorX: corner === "tl" || corner === "bl" ? box.left + box.width : box.left,
+      anchorY: corner === "tl" || corner === "tr" ? box.top + box.height : box.top,
+      noteIds: box.noteIds,
+    };
+    setResizeKey(box.key);
   }
 
   function handleAddNote() {
@@ -243,26 +317,42 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
         {present ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
       </button>
 
-      {clusters.map((box) => (
-        <div
-          key={box.key}
-          onPointerDown={(e) => handlePointerDownGroup(e, box)}
-          className={cn(
-            "absolute z-0 rounded-[18px] border-2 border-dashed border-sage/40 bg-sage/5",
-            groupDragKey === box.key ? "cursor-grabbing" : "cursor-grab transition-[left,top,width,height] duration-100",
-          )}
-          style={{ left: `${box.left}%`, top: `${box.top}%`, width: `${box.width}%`, height: `${box.height}%` }}
-        >
-          <input
-            type="text"
-            value={clusterTitles[box.key] ?? ""}
-            onChange={(e) => setClusterTitles((prev) => ({ ...prev, [box.key]: e.target.value }))}
-            onPointerDown={(e) => e.stopPropagation()}
-            placeholder="Name this group…"
-            className="absolute -top-3 left-4 z-[3] min-w-[110px] max-w-[70%] rounded-full border border-sage bg-card px-2.5 py-[3px] font-mono text-[10.5px] uppercase tracking-[0.07em] text-sage outline-none placeholder:font-sans placeholder:text-[11px] placeholder:normal-case placeholder:tracking-normal placeholder:text-sage/55"
-          />
-        </div>
-      ))}
+      {clusters.map((box) => {
+        const isBeingManipulated = groupDragKey === box.key || resizeKey === box.key;
+        return (
+          <div
+            key={box.key}
+            onPointerDown={(e) => handlePointerDownGroup(e, box)}
+            className={cn(
+              "absolute z-0 rounded-[18px] border-2 border-dashed border-sage/40 bg-sage/5",
+              groupDragKey === box.key ? "cursor-grabbing" : "cursor-grab",
+              isBeingManipulated ? "" : "transition-[left,top,width,height] duration-100",
+            )}
+            style={{ left: `${box.left}%`, top: `${box.top}%`, width: `${box.width}%`, height: `${box.height}%` }}
+          >
+            <input
+              type="text"
+              value={clusterTitles[box.key] ?? ""}
+              onChange={(e) => setClusterTitles((prev) => ({ ...prev, [box.key]: e.target.value }))}
+              onPointerDown={(e) => e.stopPropagation()}
+              placeholder="Name this group…"
+              className="absolute -top-3 left-4 z-[3] min-w-[110px] max-w-[70%] rounded-full border border-sage bg-card px-2.5 py-[3px] font-mono text-[10.5px] uppercase tracking-[0.07em] text-sage outline-none placeholder:font-sans placeholder:text-[11px] placeholder:normal-case placeholder:tracking-normal placeholder:text-sage/55"
+            />
+
+            {RESIZE_HANDLES.map(({ corner, position, cursor }) => (
+              <div
+                key={corner}
+                onPointerDown={(e) => handlePointerDownResize(e, box, corner)}
+                className={cn(
+                  "absolute z-[4] size-3 rounded-sm border-2 border-sage bg-card",
+                  position,
+                  cursor,
+                )}
+              />
+            ))}
+          </div>
+        );
+      })}
 
       {notes.map((note) => (
         <StickyNote
