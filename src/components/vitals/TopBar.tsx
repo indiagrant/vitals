@@ -23,7 +23,12 @@ export function TopBar({ view, employee, sprint, onSprintChange }: TopBarProps) 
   const patternsWindow = view === "patterns" ? patternSprintWindow() : null;
 
   return (
-    <div className="flex items-center justify-between px-10 py-4 border-b border-border bg-background sticky top-0 z-10">
+    // min-h locked to SprintPager's rendered height — without it the bar has
+    // no fixed height and just sizes to whatever's shortest (Patterns' plain
+    // range text is shorter than the pager's padded chip + buttons), so the
+    // whole header visibly shrinks on that page, not just the right-side
+    // control.
+    <div className="flex min-h-[66px] items-center justify-between px-10 py-4 border-b border-border bg-background sticky top-0 z-10">
       <TopBarIdentity
         label={
           isAdminView
