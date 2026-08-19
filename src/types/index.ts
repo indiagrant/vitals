@@ -86,7 +86,6 @@ export type ViewRole = "employee" | "admin";
 // ─── Retro prep (whiteboard) types ─────────────────────────────────────────
 
 export type StickyNoteColor = "sage" | "clay" | "yellow" | "blue" | "pink";
-export type StickyNoteTag = "Win" | "Pain" | "Prompt" | "Signal" | "Note";
 
 export interface StickyNote {
   id: string;
@@ -96,7 +95,7 @@ export interface StickyNote {
   tapeRot: number; // deg, rotation of the tape/pin decoration
   pinned: boolean; // thumbtack decoration vs. tape decoration (ignored while starred — starred always pins)
   color: StickyNoteColor;
-  tag: StickyNoteTag;
+  tag: string; // freeform label — seeded as "Win"/"Pain"/"Prompt"/"Signal"/"Note", user-editable from there
   starred: boolean;
   text: string;
 }

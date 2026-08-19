@@ -10,6 +10,7 @@ interface StickyNoteProps {
   dragging: boolean;
   onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => void;
   onChangeText: (value: string) => void;
+  onChangeTag: (value: string) => void;
   onDelete: () => void;
   onCycleColor: () => void;
   onToggleStar: () => void;
@@ -25,6 +26,7 @@ export function StickyNote({
   dragging,
   onPointerDown,
   onChangeText,
+  onChangeTag,
   onDelete,
   onCycleColor,
   onToggleStar,
@@ -93,13 +95,22 @@ export function StickyNote({
               ),
         )}
       >
-        <div className="mb-2 flex items-start justify-between">
-          <span
-            className={cn("font-mono text-[11px] font-medium uppercase tracking-[0.09em]", palette.text)}
-          >
-            {note.tag}
-          </span>
-          <div className="flex items-center gap-2" onPointerDown={stop}>
+        <div className="mb-2 flex items-start justify-between gap-2">
+          <input
+            type="text"
+            value={note.tag}
+            onChange={(e) => onChangeTag(e.target.value)}
+            onPointerDown={stop}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+            }}
+            placeholder="Tag"
+            className={cn(
+              "min-w-0 flex-1 truncate border-none bg-transparent font-mono text-[11px] font-medium uppercase tracking-[0.09em] outline-none placeholder:font-sans placeholder:text-[11px] placeholder:normal-case placeholder:tracking-normal placeholder:text-muted-foreground/70",
+              palette.text,
+            )}
+          />
+          <div className="flex shrink-0 items-center gap-2" onPointerDown={stop}>
             <button
               onClick={onToggleStar}
               title="Star this note"

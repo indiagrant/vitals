@@ -211,6 +211,7 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
           dragging={note.id === dragId}
           onPointerDown={(e) => handlePointerDownCard(e, note)}
           onChangeText={(value) => setNotes((prev) => prev.map((n) => (n.id === note.id ? { ...n, text: value } : n)))}
+          onChangeTag={(value) => setNotes((prev) => prev.map((n) => (n.id === note.id ? { ...n, tag: value } : n)))}
           onDelete={() => setNotes((prev) => prev.filter((n) => n.id !== note.id))}
           onCycleColor={() =>
             setNotes((prev) => prev.map((n) => (n.id === note.id ? { ...n, color: nextColor(n.color) } : n)))
