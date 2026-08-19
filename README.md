@@ -30,6 +30,31 @@ Deliberately scoped away from History's job (a chronological read of past
 check-ins) — see CLAUDE.md's "Patterns page" section for the full rationale,
 including why the sprint window is capped rather than unbounded.
 
+## Retro prep page
+
+`pages/RetroPrepView.tsx` — the Employee "Retro prep" nav item. A corkboard,
+not a stat surface: every other page is bars/sparklines/structured text, this
+one is draggable sticky notes, built for standing in front of a screen-share
+before (or during) a retro and moving things around. Pre-seeded from that
+sprint's wins, pains, prompts, and the single largest dimension delta vs. the
+previous sprint (`lib/retroBoard.ts` — a lightweight one-sprint-back
+comparison, deliberately *not* Patterns' multi-sprint algorithm; see
+CLAUDE.md's "Patterns page" for why the two stay non-overlapping).
+
+Notes drag freely, edit inline, cycle through a small color palette, delete,
+and can be starred (gold border + glow) to flag "definitely raising this."
+Drag two notes substantially onto each other and a dashed boundary appears
+around the group with an editable name — lightweight affinity-mapping.
+Toolbar actions: **Tidy board** (snap into a grid), **Reset board** (discard
+edits, reload the sprint's seed), **Copy as agenda** (plain-text bulleted
+summary, ready to paste into a meeting doc). The expand icon on the board
+itself is **present mode** — hides the sidebar/topbar/header so the board can
+fill the screen while screen-sharing.
+
+The one deliberate type-system departure in the app: note body text uses a
+handwritten accent font (Caveat) instead of Geist/JetBrains Mono, to read as
+scribbled rather than typeset.
+
 ## What's here
 
 ```
@@ -43,12 +68,14 @@ src/
 ├─ lib/
 │  ├─ utils.ts                        # cn() for className merging
 │  ├─ teamPulse.ts                    # Team overview scoring/tone helpers
-│  └─ patterns.ts                     # Pattern-detection algorithm for the Patterns page
+│  ├─ patterns.ts                     # Pattern-detection algorithm for the Patterns page
+│  └─ retroBoard.ts                   # Seed-note generation, clustering, tidy layout, agenda text
 │
 ├─ pages/
 │  ├─ SprintView.tsx                  # Employee · Sprint home (the main page)
 │  ├─ CheckInView.tsx                 # Employee · Check-in form (writes to mockData.ts)
 │  ├─ PatternsView.tsx                # Employee · Recurring cross-sprint patterns
+│  ├─ RetroPrepView.tsx               # Employee · Corkboard talking-points board
 │  ├─ TeamOverviewView.tsx            # Admin · Team overview pulse-monitor
 │  └─ PlaceholderView.tsx             # Generic "coming soon" view
 │
@@ -61,6 +88,7 @@ src/
       ├─ UserSwitcher.tsx             # Modal user picker
       ├─ Eyebrow.tsx                  # Mono-caps section label
       ├─ PatternSparkline.tsx         # Per-dimension sprint-over-sprint sparkline
+      ├─ StickyNote.tsx               # Draggable/editable corkboard note (Retro prep)
       │
       │ Sprint page parts:
       ├─ HeroCheckIn.tsx              # Headline + score + team avg + trend
@@ -117,7 +145,6 @@ pnpm dlx shadcn@latest add badge dialog dropdown-menu
 
 ## Next up
 
-- **Retro prep** view — talking points synthesized from a check-in, for the actual retro meeting
 - **History** view — browse past check-ins
 - **Admin views** — Team overview is built; by-dimension, sprint-health, sentiment-trend, and settings are still placeholders
 - **Team initialization (admin)** — admin sets each team's retro cadence: a start date plus weekly/bi-weekly/monthly recurrence. Employees should get notified a few days before their check-in window opens. No team-creation flow exists yet; this depends on it.

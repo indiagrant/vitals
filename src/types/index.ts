@@ -82,3 +82,21 @@ export interface Team {
 // ─── App-level types ───────────────────────────────────────────────────────
 
 export type ViewRole = "employee" | "admin";
+
+// ─── Retro prep (whiteboard) types ─────────────────────────────────────────
+
+export type StickyNoteColor = "sage" | "clay" | "yellow" | "blue" | "pink";
+export type StickyNoteTag = "Win" | "Pain" | "Prompt" | "Signal" | "Note";
+
+export interface StickyNote {
+  id: string;
+  x: number; // percent of board width, top-left origin
+  y: number; // percent of board height, top-left origin
+  rot: number; // deg, whole-note rotation for the informal "scattered" feel
+  tapeRot: number; // deg, rotation of the tape/pin decoration
+  pinned: boolean; // thumbtack decoration vs. tape decoration (ignored while starred — starred always pins)
+  color: StickyNoteColor;
+  tag: StickyNoteTag;
+  starred: boolean;
+  text: string;
+}

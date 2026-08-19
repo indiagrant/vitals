@@ -6,6 +6,7 @@ import { TopBar } from "@/components/vitals/TopBar";
 import { SprintView } from "@/pages/SprintView";
 import { CheckInView } from "@/pages/CheckInView";
 import { PatternsView } from "@/pages/PatternsView";
+import { RetroPrepView } from "@/pages/RetroPrepView";
 import { PlaceholderView } from "@/pages/PlaceholderView";
 import { TeamOverviewView } from "@/pages/TeamOverviewView";
 
@@ -52,12 +53,7 @@ export default function App() {
             <CheckInView employee={employee} sprint={sprint} onDone={() => setView("sprint")} />
           )}
           {view === "patterns" && <PatternsView employee={employee} />}
-          {view === "retro" && (
-            <PlaceholderView
-              title="Retro prep"
-              description="Lightweight notes you can take into your team retro."
-            />
-          )}
+          {view === "retro" && <RetroPrepView employee={employee} sprint={sprint} />}
           {view === "history" && (
             <PlaceholderView
               title="History"

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -45,10 +45,21 @@
   --color-clay-soft: var(--clay-soft);
   --color-line-soft: var(--line-soft);
 
+  /* Retro prep whiteboard — sticky note palette + starred accent */
+  --color-note-yellow:      var(--note-yellow);
+  --color-note-yellow-soft: var(--note-yellow-soft);
+  --color-note-blue:        var(--note-blue);
+  --color-note-blue-soft:   var(--note-blue-soft);
+  --color-note-pink:        var(--note-pink);
+  --color-note-pink-soft:   var(--note-pink-soft);
+  --color-gold:             var(--gold);
+  --color-gold-soft:        var(--gold-soft);
+
   /* Fonts */
   --font-sans:  "Geist", "Söhne", system-ui, sans-serif;
   --font-serif: "Instrument Serif", Georgia, serif;
   --font-mono:  "JetBrains Mono", ui-monospace, monospace;
+  --font-hand:  "Caveat", "Segoe Print", "Bradley Hand", cursive;
 }
 
 :root {
@@ -92,6 +103,15 @@
   --clay:        oklch(0.62 0.12 50);
   --clay-soft:   oklch(0.93 0.04 60);
   --line-soft:   oklch(0.94 0.01 80);
+
+  --note-yellow:      oklch(0.5 0.09 85);
+  --note-yellow-soft: oklch(0.93 0.05 95);
+  --note-blue:        oklch(0.48 0.08 240);
+  --note-blue-soft:   oklch(0.92 0.03 240);
+  --note-pink:        oklch(0.52 0.09 20);
+  --note-pink-soft:   oklch(0.93 0.035 20);
+  --gold:             oklch(0.64 0.13 75);
+  --gold-soft:        oklch(0.93 0.05 80);
 }
 
 .dark {
@@ -127,6 +147,15 @@
   --clay:      oklch(0.70 0.13 50);
   --clay-soft: oklch(0.30 0.06 50);
   --line-soft: oklch(1 0 0 / 6%);
+
+  --note-yellow:      oklch(0.82 0.09 85);
+  --note-yellow-soft: oklch(0.32 0.05 95);
+  --note-blue:        oklch(0.78 0.07 240);
+  --note-blue-soft:   oklch(0.3 0.04 240);
+  --note-pink:        oklch(0.8 0.08 20);
+  --note-pink-soft:   oklch(0.32 0.045 20);
+  --gold:             oklch(0.8 0.11 80);
+  --gold-soft:        oklch(0.34 0.05 80);
 }
 
 @layer base {
