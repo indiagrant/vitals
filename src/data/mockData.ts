@@ -19,12 +19,15 @@ export const VITALS_EMPLOYEES: Employee[] = [
 
 export const VITALS_SPRINTS = ["S20", "S21", "S22", "S23", "S24"] as const;
 
+// Contiguous 14-day sprints ending with S24 — the default active sprint —
+// starting today, so the app always reads as "we're mid-sprint right now"
+// rather than a fixed date frozen in the past.
 export const SPRINT_DATES: Record<string, string> = {
-  S20: "Jan 28 → Feb 10",
-  S21: "Feb 11 → Feb 24",
-  S22: "Feb 25 → Mar 10",
-  S23: "Mar 25 → Apr 7",
-  S24: "Apr 22 → May 5",
+  S20: "Jun 24 → Jul 7",
+  S21: "Jul 8 → Jul 21",
+  S22: "Jul 22 → Aug 4",
+  S23: "Aug 5 → Aug 18",
+  S24: "Aug 19 → Sep 1",
 };
 
 export const VITALS_DIMENSIONS: Dimension[] = [

@@ -1,5 +1,5 @@
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
-import { Star, X } from "lucide-react";
+import { Star, Trash2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { NOTE_PALETTE } from "@/lib/retroBoard";
@@ -131,7 +131,7 @@ export function StickyNote({
               aria-label="Delete note"
               className="grid size-5 cursor-pointer place-items-center text-foreground opacity-40 hover:opacity-90"
             >
-              <X className="size-[15px]" />
+              <Trash2 className="size-[15px]" />
             </button>
           </div>
         </div>
