@@ -1,4 +1,4 @@
-import type { PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { Star, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -33,6 +33,18 @@ export function StickyNote({
   const showPin = note.starred || note.pinned;
   const pinColor = note.starred ? "var(--gold)" : palette.cssVar;
   const stop = (e: ReactPointerEvent) => e.stopPropagation();
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Plain textareas don't grow with their content — without this, a note
+  // longer than the min-height box scrolls internally instead of the card
+  // growing to fit, which reads as broken on a whiteboard where the whole
+  // point is seeing everything at once.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [note.text]);
 
   return (
     <div
@@ -92,7 +104,7 @@ export function StickyNote({
               onClick={onToggleStar}
               title="Star this note"
               className={cn(
-                "grid size-[19px] place-items-center text-foreground opacity-45 hover:opacity-90",
+                "grid size-[19px] cursor-pointer place-items-center text-foreground opacity-45 hover:opacity-90",
                 note.starred && "text-gold opacity-100",
               )}
             >
@@ -101,12 +113,12 @@ export function StickyNote({
             <button
               onClick={onCycleColor}
               title="Change color"
-              className={cn("size-[17px] rounded-full border border-black/15", palette.dot)}
+              className={cn("size-[17px] cursor-pointer rounded-full border border-black/15", palette.dot)}
             />
             <button
               onClick={onDelete}
               aria-label="Delete note"
-              className="grid size-5 place-items-center text-foreground opacity-40 hover:opacity-90"
+              className="grid size-5 cursor-pointer place-items-center text-foreground opacity-40 hover:opacity-90"
             >
               <X className="size-[15px]" />
             </button>
@@ -114,12 +126,14 @@ export function StickyNote({
         </div>
 
         <textarea
+          ref={textareaRef}
           id={`retro-note-${note.id}`}
           value={note.text}
           onChange={(e) => onChangeText(e.target.value)}
           onPointerDown={stop}
           placeholder="Type here…"
-          className="min-h-[102px] w-full resize-none border-none bg-transparent font-hand text-[17px] leading-snug text-foreground outline-none placeholder:font-sans placeholder:text-[13px] placeholder:text-muted-foreground/70"
+          rows={1}
+          className="min-h-[102px] w-full resize-none overflow-hidden border-none bg-transparent font-hand text-[19px] leading-snug text-foreground outline-none placeholder:font-sans placeholder:text-[13px] placeholder:text-muted-foreground/70"
         />
       </div>
     </div>

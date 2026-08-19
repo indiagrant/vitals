@@ -47,7 +47,7 @@ function ToolButton({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-border bg-card px-3 py-1.5 text-[13px] font-medium text-foreground hover:border-sage hover:bg-sage-soft hover:text-sage"
+      className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border border-border bg-card px-3 py-1.5 text-[13px] font-medium text-foreground hover:border-sage hover:bg-sage-soft hover:text-sage"
     >
       <Icon className="size-[15px]" />
       {label}
@@ -182,7 +182,7 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
       <button
         onClick={() => setPresent((p) => !p)}
         title={present ? "Exit present mode" : "Enter present mode"}
-        className="absolute left-3.5 top-3.5 z-[6] grid size-[34px] place-items-center rounded-lg border border-border bg-card/85 text-foreground shadow-sm"
+        className="absolute left-3.5 top-3.5 z-[6] grid size-[34px] cursor-pointer place-items-center rounded-lg border border-border bg-card/85 text-foreground shadow-sm"
       >
         {present ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
       </button>
@@ -227,7 +227,7 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
           handleAddNote();
         }}
         title="Add a blank note"
-        className="absolute bottom-6 right-6 z-[5] grid size-[52px] place-items-center rounded-full bg-sage text-primary-foreground shadow-[0_10px_22px_-8px_oklch(0.22_0.008_130/_0.4)] transition-transform hover:scale-[1.06]"
+        className="absolute bottom-6 right-6 z-[5] grid size-[52px] cursor-pointer place-items-center rounded-full bg-sage text-primary-foreground shadow-[0_10px_22px_-8px_oklch(0.22_0.008_130/_0.4)] transition-transform hover:scale-[1.06]"
       >
         <Plus className="size-[22px]" />
       </button>
@@ -270,7 +270,7 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
               <button
                 onClick={() => setAgendaOpen(false)}
                 aria-label="Close"
-                className="grid size-[26px] place-items-center rounded-md text-muted-foreground hover:bg-secondary"
+                className="grid size-[26px] cursor-pointer place-items-center rounded-md text-muted-foreground hover:bg-secondary"
               >
                 <X className="size-3.5" />
               </button>
@@ -285,13 +285,13 @@ export function RetroPrepView({ employee, sprint }: RetroPrepViewProps) {
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setAgendaOpen(false)}
-                  className="rounded-lg border border-border bg-card px-4 py-2 text-[13px] font-medium text-foreground"
+                  className="cursor-pointer rounded-lg border border-border bg-card px-4 py-2 text-[13px] font-medium text-foreground"
                 >
                   Close
                 </button>
                 <button
                   onClick={handleCopyAgenda}
-                  className="min-w-[92px] rounded-lg bg-sage px-4 py-2 text-[13px] font-semibold text-primary-foreground"
+                  className="min-w-[92px] cursor-pointer rounded-lg bg-sage px-4 py-2 text-[13px] font-semibold text-primary-foreground"
                 >
                   {copyLabel}
                 </button>
