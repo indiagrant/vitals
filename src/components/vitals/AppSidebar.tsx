@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "./Eyebrow";
 import { UserSwitcher } from "./UserSwitcher";
+import { ThemeToggle } from "./ThemeToggle";
 import type { Employee, ViewRole } from "@/types";
 
 export type EmployeeNavId = "sprint" | "checkin" | "patterns" | "retro" | "history";
@@ -27,6 +28,8 @@ interface AppSidebarProps {
   employee: Employee;
   employees: Employee[];
   onEmployeeChange: (id: string) => void;
+  theme: "light" | "dark";
+  onToggleTheme: () => void;
 }
 
 const EMPLOYEE_NAV: Array<{ id: EmployeeNavId; label: string; icon: React.ComponentType<{ className?: string }> }> = [
@@ -75,7 +78,16 @@ function NavButton({
   );
 }
 
-export function AppSidebar({ role, view, onViewChange, employee, employees, onEmployeeChange }: AppSidebarProps) {
+export function AppSidebar({
+  role,
+  view,
+  onViewChange,
+  employee,
+  employees,
+  onEmployeeChange,
+  theme,
+  onToggleTheme,
+}: AppSidebarProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
@@ -85,11 +97,14 @@ export function AppSidebar({ role, view, onViewChange, employee, employees, onEm
           <span className="translate-x-[1.5px] translate-y-[0.5px]">v</span>
         </div>
         <span className="text-base font-semibold tracking-tight">Vitals</span>
-        {role === "admin" && (
-          <span className="ml-auto font-mono text-[9px] tracking-[0.1em] uppercase bg-foreground text-background px-1.5 py-0.5 rounded">
-            Admin
-          </span>
-        )}
+        <div className="ml-auto flex items-center gap-1.5">
+          {role === "admin" && (
+            <span className="font-mono text-[9px] tracking-[0.1em] uppercase bg-foreground text-background px-1.5 py-0.5 rounded">
+              Admin
+            </span>
+          )}
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        </div>
       </div>
 
       <nav className="flex flex-col gap-0.5">

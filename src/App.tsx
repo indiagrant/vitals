@@ -17,6 +17,12 @@ export default function App() {
   const [employeeId, setEmployeeId] = useState<string>("E001");
   const [view, setView] = useState<NavId>("sprint");
   const [sprint, setSprint] = useState<string>("S24");
+  // Read whatever index.html's inline script already applied to <html>, so
+  // this stays in sync with it instead of independently re-deciding and
+  // risking a mismatch.
+  const [theme, setTheme] = useState<"light" | "dark">(() =>
+    document.documentElement.classList.contains("dark") ? "dark" : "light",
+  );
 
   const employee = vitalsEmployee(employeeId)!;
   const role: ViewRole = employee.isAdmin ? "admin" : "employee";
@@ -27,6 +33,11 @@ export default function App() {
     setView("sprint");
   }, [employeeId]);
 
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("vitals-theme", theme);
+  }, [theme]);
+
   return (
     <div className="h-screen w-screen flex overflow-hidden bg-background text-foreground">
       <AppSidebar
@@ -36,6 +47,8 @@ export default function App() {
         employee={employee}
         employees={VITALS_EMPLOYEES}
         onEmployeeChange={setEmployeeId}
+        theme={theme}
+        onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
       />
 
       <div className="flex-1 min-w-0 flex flex-col overflow-y-auto">
