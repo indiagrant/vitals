@@ -132,3 +132,69 @@ the constant exists so behavior is already defined for when it does.
 - `src/pages/` — page-level composition for a specific role/view.
 - `src/types/index.ts` — the domain model. Extend it when new data shapes are
   needed rather than passing loosely-typed objects around.
+
+## Testing
+
+Vitals uses **Vitest** (not Jest) — it reuses `vite.config.ts`'s transform and
+`@` alias with zero duplicate config, and has a Jest-compatible `describe`/
+`it`/`expect` API. Test config lives in `vite.config.ts`'s `test` block, not
+a separate `vitest.config.ts` — keep it there so alias/plugin config can
+never drift between build and test.
+
+**Run tests:** `npm test` (single run) · `npm run test:watch` (watch mode) ·
+`npm run test:coverage` (with coverage report).
+
+**Colocate test files** next to the source they cover:
+`src/lib/teamPulse.ts` → `src/lib/teamPulse.test.ts`,
+`src/components/vitals/DimensionBar.tsx` → `DimensionBar.test.tsx`. No
+separate `__tests__/` tree.
+
+**mockData isolation.** `src/data/mockData.ts`'s seed objects are shared,
+mutable module-level singletons — `submitCheckIn` writes into them directly,
+and several read helpers (`vitalsEmpAvg`, `vitalsTrend`, `getVitalsTeams`,
+`detectPatternSignals`, `buildSeedNotes`) read that live, possibly-mutated
+state. Vitest isolates module registries **per test file** by default, but
+NOT between tests within the same file — so any test (or `describe` block)
+whose tests touch `submitCheckIn` or read from something that reads
+`VITALS_SURVEYS`/`VITALS_REFLECTIONS` must reset the module registry before
+every test:
+
+```ts
+let mockData: typeof import("@/data/mockData");
+
+beforeEach(async () => {
+  vi.resetModules();
+  mockData = await import("@/data/mockData");
+});
+```
+
+If the module under test itself imports `mockData` (e.g. `patterns.ts`,
+`retroBoard.ts`), dynamically re-import *that* module too in the same
+`beforeEach` — a statically-imported module closes over the stale pre-reset
+`mockData` instance. Pure functions taking plain params need none of this —
+see `src/lib/patterns.test.ts` and `src/data/mockData.test.ts` for the
+pattern applied to only the functions that need it, scoped to their own
+`describe` block, in an otherwise-static-import test file.
+
+**What needs a test, going forward:**
+- Every new function in `src/lib/` or a new pure/read helper in
+  `src/data/mockData.ts` gets a test file: happy path, a boundary value, and
+  — if bad input is possible — the actual current behavior on bad input
+  (even if that's "throws").
+- Every new page (`src/pages/`) or component (`src/components/vitals/`,
+  `src/components/ui/`) gets at least a render-smoke test.
+- Components with real internal state/interaction beyond a trivial toggle
+  (calibrate against `RatingRow`/`AppSidebar`/`UserSwitcher`/`PatternsView`/
+  `CheckInView`/`TeamOverviewView`) get interaction tests via
+  `@testing-library/user-event`, not just a smoke test.
+- Components driven by real browser geometry/timing jsdom can't fake —
+  canvas (`TeamTrace`), `getBoundingClientRect`-driven drag math
+  (`RetroPrepView`), `scrollHeight`-dependent effects (`StickyNote`) — get a
+  smoke test only, plus full coverage of any logic extracted into a pure
+  `src/lib/` function instead (the existing pattern: `RetroPrepView`'s
+  cluster/layout math already lives in `retroBoard.ts` specifically so it's
+  unit-testable). Full drag/interaction coverage for these is out of scope
+  for unit tests — leave a one-line comment noting what's deliberately not
+  covered and why; defer to a future e2e tool if that's ever added.
+- If new code calls `submitCheckIn` (or anything downstream of mutable
+  mockData state), use the isolation pattern above.

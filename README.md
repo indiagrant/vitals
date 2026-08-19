@@ -12,6 +12,19 @@ pnpm install      # or npm install / yarn
 pnpm dev          # start dev server at http://localhost:5173
 ```
 
+## Testing
+
+```bash
+pnpm test           # run once
+pnpm test:watch     # watch mode
+pnpm test:coverage  # with a coverage report
+```
+
+Vitest + React Testing Library, colocated `*.test.ts(x)` files next to the
+source they cover. See CLAUDE.md's "Testing" section for the full convention
+— in particular, the `mockData.ts` isolation pattern (`vi.resetModules()`)
+needed by any test touching its mutable seed state.
+
 ## Check-in form
 
 `pages/CheckInView.tsx` — the Employee "Check-in" data entry point. Captures
