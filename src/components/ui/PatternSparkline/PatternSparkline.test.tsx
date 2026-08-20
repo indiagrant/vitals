@@ -48,4 +48,26 @@ describe("PatternSparkline", () => {
 
     expect(screen.queryByText("S20")).not.toBeInTheDocument();
   });
+
+  it("hides the decorative svg from assistive tech in both variants", () => {
+    const { container: mini } = render(
+      <PatternSparkline values={values} sprints={sprints} tone="sage" variant="mini" />,
+    );
+    const { container: full } = render(
+      <PatternSparkline values={values} sprints={sprints} tone="sage" variant="full" />,
+    );
+    expect(mini.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    expect(full.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("exposes every point's real value as text in the full variant", () => {
+    render(<PatternSparkline values={values} sprints={sprints} tone="sage" variant="full" />);
+    expect(screen.getByText("S20: 3.0 out of 5")).toBeInTheDocument();
+    expect(screen.getByText("S24: 4.5 out of 5")).toBeInTheDocument();
+  });
+
+  it("has no text-alternative list in the mini variant (redundant with adjacent prose)", () => {
+    render(<PatternSparkline values={values} sprints={sprints} tone="sage" variant="mini" />);
+    expect(screen.queryByText("S20: 3.0 out of 5")).not.toBeInTheDocument();
+  });
 });

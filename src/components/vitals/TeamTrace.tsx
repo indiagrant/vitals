@@ -123,6 +123,7 @@ export function TeamTrace({ team, size = "sm" }: TeamTraceProps) {
     <div className="relative">
       <canvas
         ref={canvasRef}
+        aria-hidden="true"
         className={
           big
             ? "w-full h-[92px] block rounded-xl bg-line-soft"
@@ -131,6 +132,15 @@ export function TeamTrace({ team, size = "sm" }: TeamTraceProps) {
         onMouseMove={handleMove}
         onMouseLeave={() => setTooltip(null)}
       />
+      {/* Canvas has no accessible content of its own (and its per-point
+          tooltip is mouse-only) — this is the real text equivalent. */}
+      <ul className="sr-only">
+        {team.checkins.map((c) => (
+          <li key={c.name}>
+            {c.name}: {c.score.toFixed(1)} out of 5
+          </li>
+        ))}
+      </ul>
       {tooltip && (
         <div
           className="fixed z-50 pointer-events-none rounded-lg bg-foreground text-background font-mono text-[11.5px] leading-tight px-2.5 py-1.5 shadow-lg"

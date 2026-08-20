@@ -47,6 +47,7 @@ export function PatternSparkline({ values, sprints, tone, variant = "mini", clas
       <svg
         viewBox={`0 0 ${w} ${h}`}
         preserveAspectRatio="none"
+        aria-hidden="true"
         className={big ? "block h-[52px] w-full" : "block h-8 w-full"}
       >
         {big &&
@@ -106,6 +107,19 @@ export function PatternSparkline({ values, sprints, tone, variant = "mini", clas
           );
         })}
       </svg>
+
+      {/* The svg above is aria-hidden — this is the real accessible content
+          for the "full" variant, which (unlike "mini") carries precise
+          per-sprint values not already spelled out in adjacent prose. */}
+      {big && (
+        <ul className="sr-only">
+          {sprints.map((sprint, i) => (
+            <li key={sprint}>
+              {sprint}: {values[i].toFixed(1)} out of 5
+            </li>
+          ))}
+        </ul>
+      )}
 
       {big && hover && (
         <div
