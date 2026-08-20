@@ -3,6 +3,13 @@ name: Deploy Storybook to GitHub Pages
 on:
   push:
     branches: [main]
+    paths:
+      - "src/components/ui/**"
+      - "src/design-system/**"
+      - ".storybook/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/deploy-storybook.yml"
 
 permissions:
   contents: read
