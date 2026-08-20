@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Eyebrow } from "./Eyebrow";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { UserSwitcher } from "./UserSwitcher";
 import { ThemeToggle } from "./ThemeToggle";
 import type { Employee, ViewRole } from "@/types";

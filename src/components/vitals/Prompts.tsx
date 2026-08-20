@@ -1,4 +1,4 @@
-import { Eyebrow } from "./Eyebrow";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { VITALS_REFLECTIONS } from "@/data/mockData";
 
 interface PromptsProps {

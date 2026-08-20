@@ -1,7 +1,7 @@
 import { vitalsEmpAvg } from "@/data/mockData";
 import type { Employee } from "@/types";
 import { cn } from "@/lib/utils";
-import { Eyebrow } from "./Eyebrow";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 
 interface UserSwitcherProps {
   open: boolean;

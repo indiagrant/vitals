@@ -1,5 +1,5 @@
-import { Eyebrow } from "./Eyebrow";
-import { DimensionBar } from "./DimensionBar";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { DimensionBar } from "@/components/ui/DimensionBar";
 import { VITALS_DIMENSIONS, VITALS_SURVEYS, VITALS_SPRINTS } from "@/data/mockData";
 
 interface DimensionGridProps {

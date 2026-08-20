@@ -12,7 +12,9 @@ additional `.md` files) rather than letting context live only in chat
 history. Likewise, package up recurring workflows as skills once a pattern
 repeats rather than re-explaining it each session. Keep the README's
 "What's here" tree and "Next up" list in sync with what's actually shipped —
-stale docs are worse than no docs.
+stale docs are worse than no docs. The same rule applies to the design system
+specifically — see "Growing the design system" below: it grows with the app
+or it becomes misleading.
 
 ## Design/dev workflow: mock first, then translate
 
@@ -128,10 +130,59 @@ the constant exists so behavior is already defined for when it does.
   duplicate them.
 - `src/lib/` — pure helper logic shared across components (tone/status
   thresholds, formatting), not tied to one page.
-- `src/components/vitals/` — reusable page-building blocks, one concern each.
+- `src/components/ui/` — the design system: generic, tokenized, no domain
+  knowledge (Button, Card, Badge, Eyebrow, DimensionBar, RatingRow,
+  PatternSparkline). One PascalCase folder per component
+  (`Component.tsx` + `index.ts` + `.stories.tsx` + `.test.tsx`), imported as
+  `@/components/ui/ComponentName`. Kept deliberately small — only what the
+  app actually consumes, not a speculative kitchen sink. `npm run storybook`
+  browses every component plus MDX Foundations docs (Colors/Typography/
+  Spacing) that render live from `src/design-system/`'s actual CSS custom
+  properties.
+- `src/design-system/tokens.css` / `typography.css` — the design system's
+  source of truth for color, radius, and font-family tokens. `src/index.css`
+  imports both and wires them into Tailwind v4's `@theme inline` mapping —
+  edit the values here, not in index.css.
+- `src/components/vitals/` — domain composition: page-specific pieces
+  (HeroCheckIn, TicketList, AppSidebar, …) that consume `components/ui/` and
+  know about Vitals' actual data (Employee, Ticket, HealthMetrics). If a
+  piece has zero domain knowledge and could plausibly be reused outside this
+  app, it belongs in `components/ui/` instead.
 - `src/pages/` — page-level composition for a specific role/view.
 - `src/types/index.ts` — the domain model. Extend it when new data shapes are
   needed rather than passing loosely-typed objects around.
+
+## Growing the design system
+
+`components/ui/` and `design-system/` are not a fixed deliverable — they grow
+the same way the rest of this file does (see "Docs and skills grow with the
+project" above). A design system that stops changing while the app keeps
+changing is worse than no design system: it starts lying about what's
+actually shipped. So as part of building a feature, not as cleanup after:
+
+- **New generic UI** (no domain knowledge — types are just primitives/enums,
+  no `Employee`/`Ticket`/`HealthMetrics`, no `mockData` import) belongs in
+  `components/ui/<PascalCase>/`, not inline in a page or added to
+  `components/vitals/`. Give it `Component.tsx` + `index.ts` +
+  `.stories.tsx` + a test (smoke, or interaction if it has real state — see
+  the Testing section's calibration list below).
+- **New token** (a color, radius, or font value used more than once, or
+  meaningful enough to name) goes in `design-system/tokens.css` or
+  `typography.css`, referenced via `var()` — never a hardcoded oklch/hex/px
+  value duplicated inline. If it's foundational enough to explain (not just
+  a one-off), add it to the matching Storybook Foundations MDX page
+  (Colors/Typography/Spacing) so the live docs keep matching reality.
+- **New recurring pattern that isn't (yet) a component** — a hand-rolled
+  recipe like the app already has a few of (a stat readout, a status-tone
+  mapping) — doesn't have to be extracted immediately, but note in the
+  nearest component's story or doc where it lives and that it's duplicated,
+  the way this project already flags Card as "exported, not yet consumed" or
+  Button's unused variants as "documented ahead of need." An honest gap
+  beats a silently stale doc.
+- Before calling UI work done, ask: *does Storybook already show this, or
+  does it need a new/updated story?* If the app's behavior and Storybook's
+  story for it have diverged, fix that in the same change — don't leave it
+  for later.
 
 ## Testing
 
@@ -185,8 +236,13 @@ pattern applied to only the functions that need it, scoped to their own
   `src/components/ui/`) gets at least a render-smoke test.
 - Components with real internal state/interaction beyond a trivial toggle
   (calibrate against `RatingRow`/`AppSidebar`/`UserSwitcher`/`PatternsView`/
-  `CheckInView`/`TeamOverviewView`) get interaction tests via
-  `@testing-library/user-event`, not just a smoke test.
+  `CheckInView`/`TeamOverviewView`) get interaction tests, not just a smoke
+  test — `@testing-library/user-event` for realistic user gestures (click,
+  hover, type). `PatternSparkline` is the one exception worth knowing about:
+  its hover state is driven by raw `clientX`/`clientY` on SVG `<circle>`
+  points, so its test uses `fireEvent.mouseEnter(circle, { clientX, clientY
+  })` directly instead — `user-event` isn't a better fit for asserting a
+  specific synthetic-event payload.
 - Components driven by real browser geometry/timing jsdom can't fake —
   canvas (`TeamTrace`), `getBoundingClientRect`-driven drag math
   (`RetroPrepView`), `scrollHeight`-dependent effects (`StickyNote`) — get a

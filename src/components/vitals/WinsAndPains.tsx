@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Eyebrow } from "./Eyebrow";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { VITALS_REFLECTIONS } from "@/data/mockData";
 import type { Reflection } from "@/types";
 

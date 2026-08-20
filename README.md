@@ -72,11 +72,16 @@ scribbled rather than typeset.
 
 ```
 src/
-├─ index.css                          # Tailwind v4 + Vitals theme tokens (warm cream + sage)
+├─ index.css                          # Tailwind v4 wiring — imports design-system/ tokens +
+│                                      # typography, the @theme mapping, global base styles
 ├─ main.tsx
 ├─ App.tsx                            # Shell: sidebar + topbar + page routing
 ├─ types/index.ts                     # Domain types (Employee, HealthMetrics, Ticket, …)
 ├─ data/mockData.ts                   # Employees, sprints, surveys, tickets, reflections
+│
+├─ design-system/
+│  ├─ tokens.css                      # Source of truth: every color + radius token (:root/.dark)
+│  └─ typography.css                  # Font-family token values (Geist, Instrument Serif, …)
 │
 ├─ lib/
 │  ├─ utils.ts                        # cn() for className merging
@@ -93,24 +98,60 @@ src/
 │  └─ PlaceholderView.tsx             # Generic "coming soon" view
 │
 └─ components/
-   ├─ ui/                             # shadcn primitives (button, card)
-   └─ vitals/
+   ├─ ui/                             # The design system — generic, tokenized, no domain knowledge.
+   │                                  # Each folder: Component.tsx + index.ts + .stories.tsx + .test.tsx
+   │  ├─ Button/
+   │  ├─ Card/
+   │  ├─ Badge/                       # Tone-based status label (extracted from TicketList)
+   │  ├─ Eyebrow/                     # Mono-caps section label
+   │  ├─ DimensionBar/                # Single 5-step bar (sage/clay tone)
+   │  ├─ RatingRow/                   # Interactive counterpart to DimensionBar
+   │  └─ PatternSparkline/            # Per-dimension sprint-over-sprint sparkline
+   └─ vitals/                         # Domain composition — consumes components/ui/, knows about
+      │                               # Vitals' actual data (Employee, Ticket, HealthMetrics, …)
       ├─ AppSidebar.tsx               # Role-aware sidebar nav
       ├─ TopBar.tsx                   # Sticky topbar w/ sprint pager
       ├─ SprintPager.tsx              # ← / → between sprints
       ├─ UserSwitcher.tsx             # Modal user picker
-      ├─ Eyebrow.tsx                  # Mono-caps section label
-      ├─ PatternSparkline.tsx         # Per-dimension sprint-over-sprint sparkline
       ├─ StickyNote.tsx               # Draggable/editable corkboard note (Retro prep)
       │
       │ Sprint page parts:
       ├─ HeroCheckIn.tsx              # Headline + score + team avg + trend
       ├─ DimensionGrid.tsx            # Six dimension bars w/ deltas vs prev sprint
-      ├─ DimensionBar.tsx             # Single 5-step bar (sage/clay tone)
       ├─ TicketList.tsx               # Tickets w/ estimate-vs-actual bar + notes
       ├─ WinsAndPains.tsx             # Sage / clay reflection columns
       └─ Prompts.tsx                  # Three open prompts for next 1:1
 ```
+
+## Design system
+
+`src/components/ui/` is a small, in-house design system — not a kitchen sink:
+Button, Card, Badge, Eyebrow, DimensionBar, RatingRow, PatternSparkline, each
+consumed exactly where the app actually needs it (see the file tree above).
+Import from the component's own folder:
+
+```tsx
+import { Button } from "@/components/ui/Button";
+
+<Button size="lg" disabled={!allRated} onClick={handleSubmit}>
+  Submit check-in
+</Button>
+```
+
+`src/design-system/tokens.css` and `typography.css` are its source of truth
+for color and type; `src/index.css` just wires them into Tailwind v4's
+`@theme inline`. Every component, plus MDX docs for Colors/Typography/Spacing,
+is browsable and live-editable in Storybook:
+
+```bash
+pnpm storybook        # localhost:6006
+pnpm build-storybook  # static build, e.g. for hosting
+```
+
+**This grows with the app.** New generic UI goes in `components/ui/` with a
+story, not inline in a page. See CLAUDE.md's "Growing the design system" for
+the full rule — the short version: if Storybook stops matching what's
+shipped, fix that in the same change, not later.
 
 ## The Sprint page
 
@@ -153,8 +194,14 @@ Custom tokens: `bg-sage`, `bg-sage-soft`, `bg-clay`, `bg-clay-soft`,
 Already configured for shadcn (`components.json` in repo root):
 
 ```bash
-pnpm dlx shadcn@latest add badge dialog dropdown-menu
+pnpm dlx shadcn@latest add dialog dropdown-menu
 ```
+
+shadcn writes flat, lowercase files into `components/ui/` — manually relocate
+whatever it generates into a `PascalCase/` folder (`Component.tsx` + `index.ts`,
+matching Button/Card/etc.) before using it. Vitals already has its own
+hand-rolled `Badge` (sage/clay/muted tone-based, not shadcn's default color
+system) — don't regenerate one from the CLI.
 
 ## Next up
 

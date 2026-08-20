@@ -1,0 +1,74 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { ThemeSync } from "./ThemeSync";
+
+<Meta title="Design system/Foundations/Colors" />
+
+# Colors
+
+Every swatch below paints from the actual CSS custom properties in
+[`tokens.css`](./tokens.css) — nothing here is a hardcoded hex/oklch copy.
+Toggle below and every swatch repaints, because the app's real `dark` class
+is what's actually toggling.
+
+<ThemeSync />
+
+export const Swatch = ({ name, cssVar, usage }) => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 6, width: 180 }}>
+    <div
+      style={{
+        height: 56,
+        borderRadius: 8,
+        background: `var(${cssVar})`,
+        border: "1px solid #d8d5cb",
+      }}
+    />
+    <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 600, color: "#222" }}>{name}</span>
+    <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#767267" }}>
+      {cssVar}
+    </span>
+    <span style={{ fontSize: 12, color: "#767267", lineHeight: 1.4 }}>{usage}</span>
+  </div>
+);
+
+export const Row = ({ children }) => (
+  <div style={{ display: "flex", flexWrap: "wrap", gap: 20, marginBottom: 32 }}>{children}</div>
+);
+
+## Core
+
+<Row>
+  <Swatch name="Background" cssVar="--background" usage="Page canvas." />
+  <Swatch name="Foreground" cssVar="--foreground" usage="Default text." />
+  <Swatch name="Card" cssVar="--card" usage="Elevated surfaces." />
+  <Swatch name="Primary / Sage" cssVar="--primary" usage="Brand + positive signal." />
+  <Swatch name="Secondary" cssVar="--secondary" usage="Low-emphasis fills." />
+  <Swatch name="Muted" cssVar="--muted" usage="Muted backgrounds." />
+  <Swatch name="Accent" cssVar="--accent" usage="Sage-tinted hover/active fill." />
+  <Swatch name="Destructive" cssVar="--destructive" usage="Genuinely destructive actions." />
+  <Swatch name="Border" cssVar="--border" usage="Hairlines, input outlines." />
+</Row>
+
+## Semantic pair — Sage & Clay
+
+The one rule every score, status, and trend in Vitals follows: **Sage** reads
+positive, **Clay** reads "worth a look" — a warm terracotta standing in for
+red, deliberately softer so nothing reads as an alarm.
+
+<Row>
+  <Swatch name="Sage" cssVar="--sage" usage="Scores ≥4, shipped, trend up." />
+  <Swatch name="Sage soft" cssVar="--sage-soft" usage="Hero ribbon, note pin." />
+  <Swatch name="Clay" cssVar="--clay" usage="Scores ≤2, blocked, trend down." />
+  <Swatch name="Clay soft" cssVar="--clay-soft" usage="Hero ribbon, pain panel." />
+</Row>
+
+## Sticky-note & accent palette
+
+Decorative and organizational only — unlike Sage/Clay, note color carries no
+meaning. Gold is the one exception: reserved for a starred note.
+
+<Row>
+  <Swatch name="Yellow" cssVar="--note-yellow" usage="" />
+  <Swatch name="Blue" cssVar="--note-blue" usage="" />
+  <Swatch name="Pink" cssVar="--note-pink" usage="" />
+  <Swatch name="Gold" cssVar="--gold" usage="Starred notes only." />
+</Row>

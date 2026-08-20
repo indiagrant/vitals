@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Eyebrow } from "@/components/vitals/Eyebrow";
-import { RatingRow } from "@/components/vitals/RatingRow";
-import { Button } from "@/components/ui/button";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { RatingRow } from "@/components/ui/RatingRow";
+import { Button } from "@/components/ui/Button";
 import { VITALS_DIMENSIONS, submitCheckIn } from "@/data/mockData";
 import type { Employee, HealthMetrics } from "@/types";
 

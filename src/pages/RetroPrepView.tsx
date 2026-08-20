@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointer
 import { ClipboardList, LayoutGrid, Maximize2, Minimize2, Plus, RotateCcw, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Eyebrow } from "@/components/vitals/Eyebrow";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { StickyNote } from "@/components/vitals/StickyNote";
 import {
   buildAgendaText,

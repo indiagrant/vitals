@@ -1,4 +1,4 @@
-import { Eyebrow } from "@/components/vitals/Eyebrow";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 
 interface PlaceholderViewProps {
   title: string;

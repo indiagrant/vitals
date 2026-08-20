@@ -1,0 +1,6 @@
+:root {
+  --font-family-sans:  "Geist", "Söhne", system-ui, sans-serif;
+  --font-family-serif: "Instrument Serif", Georgia, serif;
+  --font-family-mono:  "JetBrains Mono", ui-monospace, monospace;
+  --font-family-hand:  "Caveat", "Segoe Print", "Bradley Hand", cursive;
+}

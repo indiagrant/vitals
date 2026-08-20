@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Eyebrow } from "@/components/vitals/Eyebrow";
-import { PatternSparkline } from "@/components/vitals/PatternSparkline";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { PatternSparkline } from "@/components/ui/PatternSparkline";
 import { detectPatternSignals, patternDeltaDisplay, patternSprintWindow } from "@/lib/patterns";
 import { VITALS_DIMENSIONS, vitalsTrend } from "@/data/mockData";
 import type { Employee } from "@/types";

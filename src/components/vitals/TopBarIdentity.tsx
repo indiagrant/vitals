@@ -1,4 +1,4 @@
-import { Eyebrow } from "./Eyebrow";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 
 interface TopBarIdentityProps {
   label: string;

@@ -1,0 +1,99 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { ThemeSync } from "./ThemeSync";
+
+<Meta title="Design system/Foundations/Spacing" />
+
+# Spacing, radius & elevation
+
+<ThemeSync />
+
+## Radius
+
+Computed live from the single `--radius` token in
+[`tokens.css`](./tokens.css) using the same formula as `index.css`'s
+`@theme inline` block — change `--radius` there and every swatch below (and
+every `rounded-*` utility in the app) moves together.
+
+export const RadiusSwatch = ({ name, formula }) => (
+  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+    <div
+      style={{
+        width: 72,
+        height: 72,
+        background: "var(--sage-soft)",
+        borderRadius: formula,
+      }}
+    />
+    <span style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>{name}</span>
+  </div>
+);
+
+<div style={{ display: "flex", gap: 24, marginBottom: 32 }}>
+  <RadiusSwatch name="sm" formula="calc(var(--radius) - 4px)" />
+  <RadiusSwatch name="md" formula="calc(var(--radius) - 2px)" />
+  <RadiusSwatch name="lg" formula="var(--radius)" />
+  <RadiusSwatch name="xl" formula="calc(var(--radius) + 4px)" />
+  <RadiusSwatch name="full" formula="9999px" />
+</div>
+
+Two exceptions exist in the shipped app, both hardcoded rather than sourced
+from the token: the hero and team-monitor cards use Tailwind's un-overridden
+`rounded-2xl` (16px), and the sticky note uses a literal `10px` that happens
+to equal `lg` by coincidence.
+
+## Spacing scale, as used
+
+Tailwind's default scale — not exposed as a custom property in this app, so
+shown here as documented convention rather than a live-bound value.
+
+export const spacing = [
+  ["gap-1", "4px", "Dimension-bar segment gap"],
+  ["gap-1.5", "6px", "Dimension-bar row gap · button (sm) gap"],
+  ["gap-2", "8px", "Rating-row segment gap · button default gap"],
+  ["px-4", "16px", "Button default horizontal padding"],
+  ["gap-2.5", "10px", "Sidebar nav item gap · identity chip gap"],
+  ["gap-3", "12px", "Ticket-row internal gap"],
+  ["gap-6", "24px", "Card content gap & vertical padding"],
+  ["p-8", "32px", "Hero check-in card padding"],
+  ["gap-10", "40px", "Hero stat row gap"],
+];
+
+export const elevation = [
+  ["shadow-xs", "Buttons, active sidebar row"],
+  ["shadow-sm", "Card resting state"],
+  ["shadow-lg", "Tooltips, team-monitor card on hover"],
+];
+
+export const Table = ({ rows, headers }) => (
+  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, color: "#222", marginBottom: 24 }}>
+    <thead>
+      <tr style={{ textAlign: "left", borderBottom: "1px solid #d8d5cb" }}>
+        {headers.map((h) => (
+          <th key={h} style={{ padding: "6px 8px" }}>{h}</th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((row) => (
+        <tr key={row[0]} style={{ borderBottom: "1px solid #eee" }}>
+          <td style={{ padding: "6px 8px", fontFamily: "var(--font-mono)" }}>{row[0]}</td>
+          {row.slice(1, -1).map((cell, i) => (
+            <td key={i} style={{ padding: "6px 8px" }}>{cell}</td>
+          ))}
+          <td style={{ padding: "6px 8px", color: "#767267" }}>{row[row.length - 1]}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+);
+
+<Table headers={["Token", "Px", "Used for"]} rows={spacing} />
+
+## Elevation
+
+<Table headers={["Tier", "Used for"]} rows={elevation} />
+
+The Retro Prep sticky note has its own bespoke, three-state elevation
+(rest / dragging / starred) — see `StickyNote.tsx` — deliberately separate
+from this flat scale, since it's selling a physical paper-on-a-board
+metaphor rather than a UI surface.

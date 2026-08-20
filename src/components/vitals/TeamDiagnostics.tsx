@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { Eyebrow } from "./Eyebrow";
-import { DimensionBar } from "./DimensionBar";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { DimensionBar } from "@/components/ui/DimensionBar";
 import { TeamTrace } from "./TeamTrace";
 import {
   formatTrend,

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
-import { Eyebrow } from "./Eyebrow";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { Badge } from "@/components/ui/Badge";
 import { VITALS_TICKETS } from "@/data/mockData";
 import type { Ticket, TicketStatus } from "@/types";
 
@@ -59,16 +60,7 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
           {ticket.id}
         </span>
         <h3 className="text-[14px] font-medium text-foreground flex-1">{ticket.title}</h3>
-        <span
-          className={cn(
-            "font-mono text-[12px] uppercase tracking-[0.1em]",
-            tone === "sage"  && "text-sage",
-            tone === "clay"  && "text-clay",
-            tone === "muted" && "text-muted-foreground",
-          )}
-        >
-          {STATUS_LABEL[ticket.status]}
-        </span>
+        <Badge tone={tone}>{STATUS_LABEL[ticket.status]}</Badge>
       </div>
 
       {/* estimate vs actual — single bar with a tick */}

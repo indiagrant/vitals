@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Eyebrow } from "./Eyebrow";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { vitalsAvg, vitalsTeamAvg, VITALS_SURVEYS } from "@/data/mockData";
 import type { Employee } from "@/types";
 
