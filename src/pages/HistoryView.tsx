@@ -85,8 +85,12 @@ export function HistoryView({ employee }: HistoryViewProps) {
   }
 
   function jumpTo(sprint: string) {
-    setExpanded((prev) => new Set(prev).add(sprint));
-    document.getElementById(`history-entry-${sprint}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const alreadyExpanded = expanded.has(sprint);
+    toggleExpanded(sprint);
+    // Only scroll on the expand transition — collapsing shouldn't also jump.
+    if (!alreadyExpanded) {
+      document.getElementById(`history-entry-${sprint}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }
 
   const query = search.trim();

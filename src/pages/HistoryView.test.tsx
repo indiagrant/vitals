@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HistoryView } from "./HistoryView";
 import { VITALS_EMPLOYEES } from "@/data/mockData";
@@ -41,6 +41,19 @@ describe("HistoryView", () => {
     await user.click(header!);
 
     expect(screen.getByText(/Billing webhooks v2 kicked off clean/)).toBeInTheDocument();
+  });
+
+  it("toggles a sprint-jump pill: expands on first click, collapses on second", async () => {
+    const user = userEvent.setup();
+    render(<HistoryView employee={maya} />);
+    const sprintNav = screen.getByRole("navigation", { name: "Jump to sprint" });
+    const pill = within(sprintNav).getByRole("button", { name: /Sprint 20 · Jun 24 → Jul 7/ });
+
+    await user.click(pill);
+    expect(screen.getByText(/Billing webhooks v2 kicked off clean/)).toBeInTheDocument();
+
+    await user.click(pill);
+    expect(screen.queryByText(/Billing webhooks v2 kicked off clean/)).not.toBeInTheDocument();
   });
 
   it("filters entries by search text, leaving only sprints that match", async () => {
