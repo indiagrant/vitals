@@ -7,6 +7,7 @@ import { SprintView } from "@/pages/SprintView";
 import { CheckInView } from "@/pages/CheckInView";
 import { PatternsView } from "@/pages/PatternsView";
 import { RetroPrepView } from "@/pages/RetroPrepView";
+import { HistoryView } from "@/pages/HistoryView";
 import { PlaceholderView } from "@/pages/PlaceholderView";
 import { TeamOverviewView } from "@/pages/TeamOverviewView";
 
@@ -67,12 +68,7 @@ export default function App() {
           )}
           {view === "patterns" && <PatternsView employee={employee} />}
           {view === "retro" && <RetroPrepView employee={employee} sprint={sprint} />}
-          {view === "history" && (
-            <PlaceholderView
-              title="History"
-              description="Your past check-ins and reflections."
-            />
-          )}
+          {view === "history" && <HistoryView employee={employee} />}
 
           {/* Admin-only pages — Team overview is built, the rest are placeholders */}
           {role === "admin" && view === "team" && <TeamOverviewView />}

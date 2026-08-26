@@ -1,11 +1,12 @@
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Badge } from "@/components/ui/Badge";
-import { VITALS_TICKETS } from "@/data/mockData";
+import { vitalsTickets } from "@/data/mockData";
 import type { Ticket, TicketStatus } from "@/types";
 
 interface TicketListProps {
   empId: string;
+  sprint: string;
 }
 
 const STATUS_LABEL: Record<TicketStatus, string> = {
@@ -22,8 +23,8 @@ const STATUS_TONE: Record<TicketStatus, "sage" | "clay" | "muted"> = {
   "carried-over": "clay",
 };
 
-export function TicketList({ empId }: TicketListProps) {
-  const tickets = VITALS_TICKETS[empId] ?? [];
+export function TicketList({ empId, sprint }: TicketListProps) {
+  const tickets = vitalsTickets(empId, sprint);
   if (tickets.length === 0) {
     return (
       <section className="flex flex-col gap-3">

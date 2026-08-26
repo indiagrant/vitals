@@ -133,7 +133,7 @@ describe("buildSeedNotes", () => {
   });
 
   it("creates one note per win/pain/prompt with the right color and tag", () => {
-    const reflection = mockData.VITALS_REFLECTIONS.E001;
+    const reflection = mockData.VITALS_REFLECTIONS.E001.S24;
     const notes = retroBoard.buildSeedNotes("E001", "S24");
 
     const wins = notes.filter((n) => n.tag === "Win");

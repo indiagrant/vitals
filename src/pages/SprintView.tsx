@@ -20,9 +20,9 @@ export function SprintView({ employee, sprint }: SprintViewProps) {
     <div className="flex flex-col gap-10 ">
       <HeroCheckIn employee={employee} sprint={sprint} />
       <DimensionGrid empId={employee.id} sprint={sprint} />
-      <TicketList empId={employee.id} />
-      <WinsAndPains empId={employee.id} />
-      <Prompts empId={employee.id} />
+      <TicketList empId={employee.id} sprint={sprint} />
+      <WinsAndPains empId={employee.id} sprint={sprint} />
+      <Prompts empId={employee.id} sprint={sprint} />
     </div>
   );
 }

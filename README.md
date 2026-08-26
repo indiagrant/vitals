@@ -76,6 +76,36 @@ The one deliberate type-system departure in the app: note body text uses a
 handwritten accent font (Caveat) instead of Geist/JetBrains Mono, to read as
 scribbled rather than typeset.
 
+## History page
+
+`pages/HistoryView.tsx` — the Employee "History" nav item. A journal, not a
+fourth stats page: a reverse-chronological read of every check-in you've
+submitted, with no bars or sparklines (Patterns already owns that visual
+language — see CLAUDE.md's "Patterns page" for the full boundary). Each
+sprint is a card with a headline reused verbatim from `lib/headline.ts`
+(the same bucket Sprint's hero uses, so a given sprint reads identically
+in both places, same Geist/semibold treatment as every other page's
+heading), a data-derived one-line synopsis naming
+whichever dimension moved most (`lib/history.ts`, in the same spirit as
+`lib/patterns.ts`'s sentence generation), six small mood dots in place of a
+bar, quoted wins/pains, plain ticket chips, and that sprint's prompts.
+
+Entries lay out in a two-column CSS-columns masonry so cards of very
+different expanded heights sit side by side without gaps. A sprint-jump
+strip, free-text search (matches wins/pains/tickets/prompts, auto-expanding
+hits), and filter chips (dim non-matching sections rather than hiding
+structure) sit above the grid. A "Worth asking again" callout
+(`findRecurringPrompt`) resurfaces any prompt asked in two or more sprints.
+Each entry has a gold star to flag it for retro — a lightweight bookmark,
+purely client-side state, not Retro prep's board.
+
+`VITALS_REFLECTIONS` and `VITALS_TICKETS` in `mockData.ts` are sprint-keyed
+(matching `VITALS_SURVEYS`) specifically so History can read every sprint,
+not just the current one — Sprint page's `TicketList`/`WinsAndPains`/
+`Prompts` and Retro prep's seed notes now read the sprint-scoped data too,
+fixing a latent bug where paging the Sprint page's header back a sprint
+didn't actually change the tickets/wins/pains shown.
+
 ## What's here
 
 ```
@@ -89,19 +119,22 @@ src/
 │
 ├─ design-system/
 │  ├─ tokens.css                      # Source of truth: every color + radius token (:root/.dark)
-│  └─ typography.css                  # Font-family token values (Geist, Instrument Serif, …)
+│  └─ typography.css                  # Font-family token values (Geist, JetBrains Mono, Caveat)
 │
 ├─ lib/
 │  ├─ utils.ts                        # cn() for className merging
+│  ├─ headline.ts                     # Score → headline text, shared by Sprint's hero + History
 │  ├─ teamPulse.ts                    # Team overview scoring/tone helpers
 │  ├─ patterns.ts                     # Pattern-detection algorithm for the Patterns page
-│  └─ retroBoard.ts                   # Seed-note generation, clustering, tidy layout, agenda text
+│  ├─ retroBoard.ts                   # Seed-note generation, clustering, tidy layout, agenda text
+│  └─ history.ts                      # Per-sprint journal entry + recurring-prompt detection
 │
 ├─ pages/
 │  ├─ SprintView.tsx                  # Employee · Sprint home (the main page)
 │  ├─ CheckInView.tsx                 # Employee · Check-in form (writes to mockData.ts)
 │  ├─ PatternsView.tsx                # Employee · Recurring cross-sprint patterns
 │  ├─ RetroPrepView.tsx               # Employee · Corkboard talking-points board
+│  ├─ HistoryView.tsx                 # Employee · Chronological check-in journal
 │  ├─ TeamOverviewView.tsx            # Admin · Team overview pulse-monitor
 │  └─ PlaceholderView.tsx             # Generic "coming soon" view
 │
@@ -222,6 +255,5 @@ system) — don't regenerate one from the CLI.
   all read/write through, so a check-in, a retro board, and an employee's
   history actually survive a reload or an app restart, not just the
   current session.
-- **History** view — browse past check-ins
 - **Admin views** — Team overview is built; by-dimension, sprint-health, sentiment-trend, and settings are still placeholders
 - **Team initialization (admin)** — admin sets each team's retro cadence: a start date plus weekly/bi-weekly/monthly recurrence. Employees should get notified a few days before their check-in window opens. No team-creation flow exists yet; this depends on it.

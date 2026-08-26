@@ -1,8 +1,8 @@
 import {
   VITALS_DIMENSIONS,
-  VITALS_REFLECTIONS,
   VITALS_SPRINTS,
   VITALS_SURVEYS,
+  vitalsReflection,
 } from "@/data/mockData";
 import type { StickyNote, StickyNoteColor } from "@/types";
 
@@ -89,7 +89,7 @@ function buildSignalNote(empId: string, sprint: string): SeedNote | null {
 }
 
 export function buildSeedNotes(empId: string, sprint: string): StickyNote[] {
-  const reflection = VITALS_REFLECTIONS[empId];
+  const reflection = vitalsReflection(empId, sprint);
   const seeds: SeedNote[] = [];
 
   reflection?.wins.forEach((w, i) =>

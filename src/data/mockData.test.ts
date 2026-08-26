@@ -78,6 +78,44 @@ describe("impure survey helpers", () => {
     });
   });
 
+  describe("vitalsReflection", () => {
+    it("returns the sprint-scoped reflection for a known employee/sprint", () => {
+      const r = mockData.vitalsReflection("E001", "S23");
+      expect(r).toEqual(mockData.VITALS_REFLECTIONS.E001.S23);
+    });
+
+    it("defaults to sprint S24 when omitted", () => {
+      expect(mockData.vitalsReflection("E001")).toEqual(mockData.VITALS_REFLECTIONS.E001.S24);
+    });
+
+    it("returns undefined for an unknown employee id", () => {
+      expect(mockData.vitalsReflection("nope")).toBeUndefined();
+    });
+
+    it("returns undefined for a known employee but unseeded sprint", () => {
+      expect(mockData.vitalsReflection("E001", "S99")).toBeUndefined();
+    });
+  });
+
+  describe("vitalsTickets", () => {
+    it("returns the sprint-scoped ticket list for a known employee/sprint", () => {
+      const tickets = mockData.vitalsTickets("E001", "S23");
+      expect(tickets).toEqual(mockData.VITALS_TICKETS.E001.S23);
+    });
+
+    it("defaults to sprint S24 when omitted", () => {
+      expect(mockData.vitalsTickets("E001")).toEqual(mockData.VITALS_TICKETS.E001.S24);
+    });
+
+    it("returns an empty array (not undefined) for an unknown employee id", () => {
+      expect(mockData.vitalsTickets("nope")).toEqual([]);
+    });
+
+    it("returns an empty array for a known employee but unseeded sprint", () => {
+      expect(mockData.vitalsTickets("E001", "S99")).toEqual([]);
+    });
+  });
+
   describe("getVitalsTeams", () => {
     it("returns four teams", () => {
       expect(mockData.getVitalsTeams()).toHaveLength(4);
@@ -133,25 +171,31 @@ describe("impure survey helpers", () => {
     });
 
     it("prepends a win without dropping existing wins", () => {
-      const before = mockData.VITALS_REFLECTIONS.E001.wins.length;
+      const before = mockData.VITALS_REFLECTIONS.E001.S24.wins.length;
       mockData.submitCheckIn("E001", "S24", mockData.VITALS_SURVEYS.E001.S24, "Shipped the thing", "");
-      expect(mockData.VITALS_REFLECTIONS.E001.wins).toHaveLength(before + 1);
-      expect(mockData.VITALS_REFLECTIONS.E001.wins[0].title).toBe("Shipped the thing");
+      expect(mockData.VITALS_REFLECTIONS.E001.S24.wins).toHaveLength(before + 1);
+      expect(mockData.VITALS_REFLECTIONS.E001.S24.wins[0].title).toBe("Shipped the thing");
     });
 
     it("leaves wins/pains untouched when win/pain are empty strings", () => {
-      const beforeWins = mockData.VITALS_REFLECTIONS.E002.wins.length;
-      const beforePains = mockData.VITALS_REFLECTIONS.E002.pains.length;
+      const beforeWins = mockData.VITALS_REFLECTIONS.E002.S24.wins.length;
+      const beforePains = mockData.VITALS_REFLECTIONS.E002.S24.pains.length;
       mockData.submitCheckIn("E002", "S24", mockData.VITALS_SURVEYS.E002.S24, "", "");
-      expect(mockData.VITALS_REFLECTIONS.E002.wins).toHaveLength(beforeWins);
-      expect(mockData.VITALS_REFLECTIONS.E002.pains).toHaveLength(beforePains);
+      expect(mockData.VITALS_REFLECTIONS.E002.S24.wins).toHaveLength(beforeWins);
+      expect(mockData.VITALS_REFLECTIONS.E002.S24.pains).toHaveLength(beforePains);
     });
 
-    it("seeds a fresh reflection record for an employee with none, then applies the new win/pain", () => {
+    it("seeds a fresh reflection record for an employee/sprint with none, then applies the new win/pain", () => {
       mockData.submitCheckIn("E999", "S24", mockData.VITALS_SURVEYS.E001.S24, "First win", "First pain");
-      expect(mockData.VITALS_REFLECTIONS.E999.wins).toHaveLength(1);
-      expect(mockData.VITALS_REFLECTIONS.E999.pains).toHaveLength(1);
-      expect(mockData.VITALS_REFLECTIONS.E999.prompts).toEqual([]);
+      expect(mockData.VITALS_REFLECTIONS.E999.S24.wins).toHaveLength(1);
+      expect(mockData.VITALS_REFLECTIONS.E999.S24.pains).toHaveLength(1);
+      expect(mockData.VITALS_REFLECTIONS.E999.S24.prompts).toEqual([]);
+    });
+
+    it("scopes a win to the submitted sprint, leaving other sprints for that employee untouched", () => {
+      const before = mockData.VITALS_REFLECTIONS.E001.S23.wins.length;
+      mockData.submitCheckIn("E001", "S24", mockData.VITALS_SURVEYS.E001.S24, "Shipped the thing", "");
+      expect(mockData.VITALS_REFLECTIONS.E001.S23.wins).toHaveLength(before);
     });
   });
 

@@ -1,14 +1,15 @@
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { VITALS_REFLECTIONS } from "@/data/mockData";
+import { vitalsReflection } from "@/data/mockData";
 import type { Reflection } from "@/types";
 
 interface WinsAndPainsProps {
   empId: string;
+  sprint: string;
 }
 
-export function WinsAndPains({ empId }: WinsAndPainsProps) {
-  const r = VITALS_REFLECTIONS[empId];
+export function WinsAndPains({ empId, sprint }: WinsAndPainsProps) {
+  const r = vitalsReflection(empId, sprint);
   if (!r) return null;
 
   return (

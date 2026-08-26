@@ -1,16 +1,17 @@
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { VITALS_REFLECTIONS } from "@/data/mockData";
+import { vitalsReflection } from "@/data/mockData";
 
 interface PromptsProps {
   empId: string;
+  sprint: string;
 }
 
 /**
  * Three open-ended questions to take into the next 1:1 or retro.
  * Designed to feel like a thoughtful nudge, not a homework list.
  */
-export function Prompts({ empId }: PromptsProps) {
-  const prompts = VITALS_REFLECTIONS[empId]?.prompts ?? [];
+export function Prompts({ empId, sprint }: PromptsProps) {
+  const prompts = vitalsReflection(empId, sprint)?.prompts ?? [];
   if (prompts.length === 0) return null;
 
   return (

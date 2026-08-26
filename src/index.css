@@ -3,7 +3,7 @@
    in the final stylesheet — once bundled, "tailwindcss" below expands into
    real rules, so this can't move into design-system/typography.css (which
    still owns the --font-family-* values themselves, just not this fetch). */
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./design-system/typography.css";
@@ -63,9 +63,8 @@
   --color-gold-soft:        var(--gold-soft);
 
   /* Fonts — indirected through design-system/typography.css's raw values so
-     Tailwind still emits font-sans/font-serif/font-mono/font-hand utilities */
+     Tailwind still emits font-sans/font-mono/font-hand utilities */
   --font-sans:  var(--font-family-sans);
-  --font-serif: var(--font-family-serif);
   --font-mono:  var(--font-family-mono);
   --font-hand:  var(--font-family-hand);
 }

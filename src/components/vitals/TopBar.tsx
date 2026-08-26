@@ -1,7 +1,7 @@
 import { ADMIN_NAV, type NavId } from "./AppSidebar";
 import { TopBarIdentity } from "./TopBarIdentity";
 import { SprintPager } from "./SprintPager";
-import { getVitalsTeams } from "@/data/mockData";
+import { getVitalsTeams, VITALS_SPRINTS } from "@/data/mockData";
 import { patternSprintWindow } from "@/lib/patterns";
 import type { Employee } from "@/types";
 
@@ -17,10 +17,13 @@ export function TopBar({ view, employee, sprint, onSprintChange }: TopBarProps) 
   const teams = getVitalsTeams();
   const totalPeople = teams.reduce((s, t) => s + t.checkins.length, 0);
 
-  // Patterns spans a window of sprints rather than showing one at a time, so
-  // the per-sprint pager doesn't apply — swap it for a static range label.
-  // See CLAUDE.md "Patterns page" for why this view doesn't use `sprint`.
-  const patternsWindow = view === "patterns" ? patternSprintWindow() : null;
+  // Patterns and History both span every sprint rather than showing one at a
+  // time, so the per-sprint pager doesn't apply — swap it for a static range
+  // label. Patterns uses its capped trailing window (see CLAUDE.md "Patterns
+  // page"); History deliberately shows the full, unbounded range instead —
+  // it's the one page whose whole job is "everything, in order".
+  const rangeSprints =
+    view === "patterns" ? patternSprintWindow() : view === "history" ? [...VITALS_SPRINTS] : null;
 
   return (
     // min-h locked to SprintPager's rendered height — without it the bar has
@@ -36,9 +39,9 @@ export function TopBar({ view, employee, sprint, onSprintChange }: TopBarProps) 
             : `${employee.name} · ${employee.role}`
         }
       />
-      {patternsWindow ? (
+      {rangeSprints ? (
         <span className="font-mono text-[12px] uppercase tracking-[0.1em] text-muted-foreground">
-          {patternsWindow[0]} → {patternsWindow[patternsWindow.length - 1]} · {patternsWindow.length} sprints
+          {rangeSprints[0]} → {rangeSprints[rangeSprints.length - 1]} · {rangeSprints.length} sprints
         </span>
       ) : (
         <SprintPager sprint={sprint} onChange={onSprintChange} />

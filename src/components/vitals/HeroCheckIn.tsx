@@ -1,18 +1,12 @@
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { vitalsAvg, vitalsTeamAvg, VITALS_SURVEYS } from "@/data/mockData";
+import { headlineForScore } from "@/lib/headline";
 import type { Employee } from "@/types";
 
 interface HeroCheckInProps {
   employee: Employee;
   sprint: string;
-}
-
-function headlineFor(score: number): { eyebrow: string; line: string } {
-  if (score >= 4.3) return { eyebrow: "A strong sprint",  line: "Most things felt right." };
-  if (score >= 3.5) return { eyebrow: "A steady sprint",  line: "Some bright spots, some edges." };
-  if (score >= 2.8) return { eyebrow: "A quiet sprint",   line: "Nothing on fire, but nothing lifted either." };
-  return              { eyebrow: "A heavy sprint",        line: "Worth sitting with what's wearing on you." };
 }
 
 export function HeroCheckIn({ employee, sprint }: HeroCheckInProps) {
@@ -21,7 +15,7 @@ export function HeroCheckIn({ employee, sprint }: HeroCheckInProps) {
 
   const score = vitalsAvg(metrics);
   const teamScore = vitalsTeamAvg(sprint);
-  const { eyebrow, line } = headlineFor(score);
+  const { eyebrow, line } = headlineForScore(score);
 
   // tone of the ribbon: sage if good, clay if low, neutral otherwise
   const ribbonTone =
