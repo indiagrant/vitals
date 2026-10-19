@@ -200,8 +200,12 @@ The Employee "Sprint" home — `pages/SprintView.tsx` — lays out one sprint's
 reflection from highest-level signal down to actionable nudges:
 
 1. **Hero check-in** — overall headline ("A heavy sprint", "A steady sprint"…),
-   the employee's average score, team average, and trend vs. previous sprint.
-   Background ribbon goes sage/clay/neutral based on score.
+   the employee's average score, and trend vs. previous sprint. Background
+   ribbon goes sage/clay/neutral based on score. Deliberately no team-level
+   comparison here — this page is an individual's own reflection, and that
+   framing stays consistent with the rest of the app's design (see CLAUDE.md).
+   Team-level aggregates live in Team overview (admin-only) instead, for
+   anyone, admins included.
 2. **Dimension grid** — six 5-step bars (Balance, Comms, Support, Collab,
    Workload, Satisfaction) with deltas vs. previous sprint.
 3. **Ticket list** — what they worked on. Each row has an estimate-vs-actual
@@ -249,13 +253,12 @@ system) — don't regenerate one from the CLI.
 - **Real persistence — in progress.** A real backend is being built:
   Node.js/Express (`server/`, deployed as a single Vercel serverless
   function via `api/index.ts`), PostgreSQL hosted on Supabase, Prisma as
-  the ORM (`prisma/schema.prisma`). Check-in's submit is wired end-to-end
-  and verified (writes to real Postgres, confirmed via the actual browser
-  UI); Sprint page reads real data for everything except team average and
-  tickets (no aggregate/tickets endpoint yet — deliberately deferred).
-  History, Patterns, Retro prep, and Team overview still read `mockData.ts`
-  unchanged. Being built in small, independently-verified steps rather
-  than all at once.
+  the ORM (`prisma/schema.prisma`). Wired and verified so far: Check-in's
+  submit (writes to real Postgres, confirmed via the actual browser UI),
+  Sprint page (minus the ticket list — no tickets endpoint yet, a
+  deliberate gap), and Patterns page. History, Retro prep, and Team
+  overview still read `mockData.ts` unchanged. Being built in small,
+  independently-verified steps rather than all at once.
 - **Check-in should lock after submission, not silently re-upsert.**
   Right now resubmitting Check-in for a sprint you've already done
   overwrites the six scores *and keeps adding new win/pain rows every

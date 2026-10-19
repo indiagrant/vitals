@@ -7,13 +7,9 @@ import type { HealthMetrics } from "@/types";
 interface HeroCheckInProps {
   current: HealthMetrics;
   previous: HealthMetrics | null;
-  // Still sourced from mockData.ts by SprintView, not the real API — an
-  // employee's own average needs one check-in, but a team average needs
-  // every employee's, which has no endpoint yet. Deliberate, flagged gap.
-  teamScore: number;
 }
 
-export function HeroCheckIn({ current, previous, teamScore }: HeroCheckInProps) {
+export function HeroCheckIn({ current, previous }: HeroCheckInProps) {
   const score = vitalsAvg(current);
   const { eyebrow, line } = headlineForScore(score);
 
@@ -41,8 +37,6 @@ export function HeroCheckIn({ current, previous, teamScore }: HeroCheckInProps) 
 
       <div className="flex items-end gap-10 pt-2">
         <Stat label="Your check-in" value={score.toFixed(1)} accent />
-        <Divider />
-        <Stat label="Team average" value={teamScore.toFixed(1)} />
         <Divider />
         <Stat
           label="Trend"
