@@ -1,4 +1,4 @@
-import { submitCheckIn, ApiError } from "./api";
+import { submitCheckIn, getEmployeeCheckIns, ApiError } from "./api";
 import type { HealthMetrics } from "@/types";
 
 const metrics: HealthMetrics = {
@@ -56,5 +56,35 @@ describe("submitCheckIn", () => {
     vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({}), { status: 500 }));
 
     await expect(submitCheckIn("E001", "S24", metrics, "", "")).rejects.toThrow("Failed to submit check-in");
+  });
+});
+
+describe("getEmployeeCheckIns", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  it("GETs /api/employees/:id/checkins and returns the parsed array on success", async () => {
+    const mockResult = [{ id: 1, employeeId: "E001", sprintId: "S24", ...metrics, prompts: [], reflections: [], sprint: { id: "S24", label: "Aug 19 → Sep 1", order: 4 } }];
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify(mockResult), { status: 200 }));
+
+    const result = await getEmployeeCheckIns("E001");
+
+    expect(fetch).toHaveBeenCalledWith("/api/employees/E001/checkins");
+    expect(result).toEqual(mockResult);
+  });
+
+  it("throws an ApiError when the employee isn't found", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ error: 'No employee with id "NOPE"' }), { status: 404 }),
+    );
+
+    try {
+      await getEmployeeCheckIns("NOPE");
+      expect.unreachable("expected getEmployeeCheckIns to throw");
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiError);
+      expect((err as ApiError).status).toBe(404);
+    }
   });
 });

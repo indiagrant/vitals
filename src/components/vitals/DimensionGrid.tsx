@@ -1,27 +1,22 @@
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { DimensionBar } from "@/components/ui/DimensionBar";
-import { VITALS_DIMENSIONS, VITALS_SURVEYS, VITALS_SPRINTS } from "@/data/mockData";
+import { VITALS_DIMENSIONS } from "@/data/mockData";
+import type { HealthMetrics } from "@/types";
 
 interface DimensionGridProps {
-  empId: string;
-  sprint: string;
+  current: HealthMetrics;
+  previous: HealthMetrics | null;
+  previousSprintId: string | null;
 }
 
-export function DimensionGrid({ empId, sprint }: DimensionGridProps) {
-  const current = VITALS_SURVEYS[empId]?.[sprint];
-  if (!current) return null;
-
-  const idx = VITALS_SPRINTS.indexOf(sprint as typeof VITALS_SPRINTS[number]);
-  const prevSprint = idx > 0 ? VITALS_SPRINTS[idx - 1] : null;
-  const prev = prevSprint ? VITALS_SURVEYS[empId]?.[prevSprint] : undefined;
-
+export function DimensionGrid({ current, previous, previousSprintId }: DimensionGridProps) {
   return (
     <section className="flex flex-col gap-5">
       <div className="flex items-baseline justify-between">
         <Eyebrow>Six dimensions, this sprint</Eyebrow>
-        {prevSprint && (
+        {previousSprintId && (
           <span className="font-mono text-[12px] text-muted-foreground tracking-[0.06em] uppercase">
-            vs. {prevSprint}
+            vs. {previousSprintId}
           </span>
         )}
       </div>
@@ -31,7 +26,7 @@ export function DimensionGrid({ empId, sprint }: DimensionGridProps) {
             key={d.key}
             label={d.label}
             value={current[d.key]}
-            prevValue={prev?.[d.key]}
+            prevValue={previous?.[d.key]}
           />
         ))}
       </div>

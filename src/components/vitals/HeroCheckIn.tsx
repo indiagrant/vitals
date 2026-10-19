@@ -1,20 +1,20 @@
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { vitalsAvg, vitalsTeamAvg, VITALS_SURVEYS } from "@/data/mockData";
+import { vitalsAvg } from "@/data/mockData";
 import { headlineForScore } from "@/lib/headline";
-import type { Employee } from "@/types";
+import type { HealthMetrics } from "@/types";
 
 interface HeroCheckInProps {
-  employee: Employee;
-  sprint: string;
+  current: HealthMetrics;
+  previous: HealthMetrics | null;
+  // Still sourced from mockData.ts by SprintView, not the real API — an
+  // employee's own average needs one check-in, but a team average needs
+  // every employee's, which has no endpoint yet. Deliberate, flagged gap.
+  teamScore: number;
 }
 
-export function HeroCheckIn({ employee, sprint }: HeroCheckInProps) {
-  const metrics = VITALS_SURVEYS[employee.id]?.[sprint];
-  if (!metrics) return null;
-
-  const score = vitalsAvg(metrics);
-  const teamScore = vitalsTeamAvg(sprint);
+export function HeroCheckIn({ current, previous, teamScore }: HeroCheckInProps) {
+  const score = vitalsAvg(current);
   const { eyebrow, line } = headlineForScore(score);
 
   // tone of the ribbon: sage if good, clay if low, neutral otherwise
@@ -46,12 +46,7 @@ export function HeroCheckIn({ employee, sprint }: HeroCheckInProps) {
         <Divider />
         <Stat
           label="Trend"
-          value={
-            <TrendArrow
-              empId={employee.id}
-              sprint={sprint}
-            />
-          }
+          value={<TrendArrow current={current} previous={previous} />}
         />
       </div>
     </section>
@@ -88,13 +83,9 @@ function Stat({
   );
 }
 
-function TrendArrow({ empId, sprint }: { empId: string; sprint: string }) {
-  const surveys = VITALS_SURVEYS[empId];
-  const sprints = ["S20", "S21", "S22", "S23", "S24"];
-  const idx = sprints.indexOf(sprint);
-  const prev = idx > 0 ? sprints[idx - 1] : null;
-  if (!prev || !surveys[prev]) return <span className="text-foreground/50">—</span>;
-  const delta = vitalsAvg(surveys[sprint]) - vitalsAvg(surveys[prev]);
+function TrendArrow({ current, previous }: { current: HealthMetrics; previous: HealthMetrics | null }) {
+  if (!previous) return <span className="text-foreground/50">—</span>;
+  const delta = vitalsAvg(current) - vitalsAvg(previous);
   if (Math.abs(delta) < 0.1) {
     return <span className="text-foreground/70">→</span>;
   }

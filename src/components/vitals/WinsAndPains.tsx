@@ -1,29 +1,25 @@
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { vitalsReflection } from "@/data/mockData";
 import type { Reflection } from "@/types";
 
 interface WinsAndPainsProps {
-  empId: string;
-  sprint: string;
+  wins: Reflection[];
+  pains: Reflection[];
 }
 
-export function WinsAndPains({ empId, sprint }: WinsAndPainsProps) {
-  const r = vitalsReflection(empId, sprint);
-  if (!r) return null;
-
+export function WinsAndPains({ wins, pains }: WinsAndPainsProps) {
   return (
     <section className="grid md:grid-cols-2 gap-5">
       <ReflectionPanel
         tone="sage"
         eyebrow="Wins worth keeping"
-        items={r.wins}
+        items={wins}
         emptyText="No wins logged this sprint — yet."
       />
       <ReflectionPanel
         tone="clay"
         eyebrow="Worth sitting with"
-        items={r.pains}
+        items={pains}
         emptyText="Nothing surfaced. That's a kind of signal too."
       />
     </section>

@@ -246,14 +246,25 @@ system) — don't regenerate one from the CLI.
 
 ## Next up
 
-- **Real persistence (local DB)** — everything today lives in memory only.
-  `mockData.ts`'s module-level objects (what Check-in writes into) reset on
-  every reload, and Retro prep's board doesn't even survive navigating away
-  from the page and back (see `RetroPrepView` — no `localStorage`, no
-  backend, state dies the moment the component unmounts). Plan is a local,
-  free-tier database (e.g. SQLite) that Check-in, History, and Retro prep
-  all read/write through, so a check-in, a retro board, and an employee's
-  history actually survive a reload or an app restart, not just the
-  current session.
+- **Real persistence — in progress.** A real backend is being built:
+  Node.js/Express (`server/`, deployed as a single Vercel serverless
+  function via `api/index.ts`), PostgreSQL hosted on Supabase, Prisma as
+  the ORM (`prisma/schema.prisma`). Check-in's submit is wired end-to-end
+  and verified (writes to real Postgres, confirmed via the actual browser
+  UI); Sprint page reads real data for everything except team average and
+  tickets (no aggregate/tickets endpoint yet — deliberately deferred).
+  History, Patterns, Retro prep, and Team overview still read `mockData.ts`
+  unchanged. Being built in small, independently-verified steps rather
+  than all at once.
+- **Check-in should lock after submission, not silently re-upsert.**
+  Right now resubmitting Check-in for a sprint you've already done
+  overwrites the six scores *and keeps adding new win/pain rows every
+  time* (no replace, no cap) — confirmed directly while testing the real
+  write path. Fix: once a check-in exists for the current sprint, the
+  Check-in page should land in its "already submitted" state rather than
+  showing the rateable form again. Starting with a hard lock (simplest,
+  solves the duplication problem directly) rather than an edit-in-place
+  flow — revisit only if people actually need to correct a submitted
+  check-in often.
 - **Admin views** — Team overview is built; by-dimension, sprint-health, sentiment-trend, and settings are still placeholders
 - **Team initialization (admin)** — admin sets each team's retro cadence: a start date plus weekly/bi-weekly/monthly recurrence. Employees should get notified a few days before their check-in window opens. No team-creation flow exists yet; this depends on it.

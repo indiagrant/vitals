@@ -34,6 +34,19 @@ export interface CheckInResult extends HealthMetrics {
   reflections: ReflectionResult[];
 }
 
+export interface SprintInfo {
+  id: string;
+  label: string;
+  order: number;
+}
+
+// What GET /api/employees/:id/checkins returns — same shape as
+// CheckInResult, plus the sprint it belongs to (used to find "the
+// previous sprint" by order, not array position).
+export interface EmployeeCheckIn extends CheckInResult {
+  sprint: SprintInfo;
+}
+
 // Same argument order/shape as mockData.ts's submitCheckIn() — a
 // deliberate match, so swapping the call site is a small, obvious diff.
 export async function submitCheckIn(
@@ -56,4 +69,19 @@ export async function submitCheckIn(
   }
 
   return data as CheckInResult;
+}
+
+// GET /api/employees/:id/checkins — one employee's full check-in history,
+// across every sprint. One call covers everything the Sprint page needs
+// for that employee (current sprint, previous sprint for deltas/trend,
+// wins/pains, prompts) — no separate request per sprint.
+export async function getEmployeeCheckIns(employeeId: string): Promise<EmployeeCheckIn[]> {
+  const res = await fetch(`/api/employees/${employeeId}/checkins`);
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new ApiError(data.error ?? "Failed to load check-ins", res.status, data.details);
+  }
+
+  return data as EmployeeCheckIn[];
 }
