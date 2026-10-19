@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { PatternSparkline } from "@/components/ui/PatternSparkline";
-import { detectPatternSignals, patternDeltaDisplay, patternSprintWindow } from "@/lib/patterns";
-import { VITALS_DIMENSIONS, vitalsTrend } from "@/data/mockData";
+import { detectPatternSignals, patternDeltaDisplay, patternsDataFrom } from "@/lib/patterns";
+import { getEmployeeCheckIns, ApiError, type EmployeeCheckIn } from "@/lib/api";
+import { VITALS_DIMENSIONS } from "@/data/mockData";
 import type { Employee } from "@/types";
 
 interface PatternsViewProps {
@@ -43,9 +44,37 @@ const TONE_ROW_HIGHLIGHT: Record<string, string> = {
 export function PatternsView({ employee }: PatternsViewProps) {
   const [activeDim, setActiveDim] = useState<string | null>(null);
   const [previewDim, setPreviewDim] = useState<string | null>(null);
+  const [checkIns, setCheckIns] = useState<EmployeeCheckIn[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const sprints = patternSprintWindow();
-  const signals = detectPatternSignals(employee.id);
+  useEffect(() => {
+    let cancelled = false;
+    setCheckIns(null);
+    setError(null);
+    getEmployeeCheckIns(employee.id)
+      .then((data) => {
+        if (!cancelled) setCheckIns(data);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof ApiError ? err.message : "Couldn't load your patterns.");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [employee.id]);
+
+  if (error) {
+    return <p className="text-sm text-clay">{error}</p>;
+  }
+
+  if (!checkIns) {
+    return <p className="text-sm text-muted-foreground">Loading…</p>;
+  }
+
+  const { sprints, trendByDim } = patternsDataFrom(checkIns);
+  const signals = detectPatternSignals(trendByDim);
   const signalByDim = Object.fromEntries(signals.map((s) => [s.dim, s]));
 
   const headline =
@@ -70,7 +99,7 @@ export function PatternsView({ employee }: PatternsViewProps) {
         <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {signals.map((sig) => {
             const dim = VITALS_DIMENSIONS.find((d) => d.key === sig.dim)!;
-            const values = vitalsTrend(employee.id, sig.dim).slice(-sprints.length);
+            const values = trendByDim[sig.dim];
             const isActive = activeDim === sig.dim;
 
             return (
@@ -116,7 +145,7 @@ export function PatternsView({ employee }: PatternsViewProps) {
 
         <div className="flex flex-col">
           {VITALS_DIMENSIONS.map((d) => {
-            const values = vitalsTrend(employee.id, d.key).slice(-sprints.length);
+            const values = trendByDim[d.key];
             const current = values[values.length - 1];
             const signal = signalByDim[d.key];
             const rowTone = signal ? signal.tone : current >= 4 ? "sage" : current <= 2 ? "clay" : "neutral";

@@ -1,4 +1,5 @@
-import { VITALS_DIMENSIONS, VITALS_SPRINTS, vitalsTrend } from "@/data/mockData";
+import { VITALS_DIMENSIONS, VITALS_SPRINTS } from "@/data/mockData";
+import type { EmployeeCheckIn } from "@/lib/api";
 import type { HealthMetrics } from "@/types";
 import type { Tone } from "@/lib/teamPulse";
 
@@ -120,9 +121,14 @@ function detectForDimension(
   return null;
 }
 
-export function detectPatternSignals(empId: string): PatternSignal[] {
+// Takes each dimension's trend directly (already windowed by the caller,
+// typically patternsDataFrom()) rather than an empId to look up internally
+// — this function has no data-source opinion of its own, mock or real.
+export function detectPatternSignals(trendByDim: Record<keyof HealthMetrics, number[]>): PatternSignal[] {
   return VITALS_DIMENSIONS.reduce<PatternSignal[]>((signals, d) => {
-    const windowed = vitalsTrend(empId, d.key).slice(-PATTERN_WINDOW_SPRINTS);
+    // Defensive re-slice: harmless if the caller already windowed, a
+    // correct safety net if it didn't.
+    const windowed = trendByDim[d.key].slice(-PATTERN_WINDOW_SPRINTS);
     const signal = detectForDimension(d.key, d.label, windowed);
     if (signal) signals.push(signal);
     return signals;
@@ -131,6 +137,32 @@ export function detectPatternSignals(empId: string): PatternSignal[] {
 
 export function patternSprintWindow(): string[] {
   return VITALS_SPRINTS.slice(-PATTERN_WINDOW_SPRINTS);
+}
+
+export interface PatternsData {
+  sprints: string[]; // windowed, oldest -> newest
+  trendByDim: Record<keyof HealthMetrics, number[]>; // each array aligned 1:1 with `sprints`
+}
+
+// Derives the windowed {sprints, trendByDim} shape the Patterns page needs
+// from one employee's real check-in history. Deliberately NOT built from
+// patternSprintWindow()'s global VITALS_SPRINTS list (that one stays as-is —
+// TopBar also depends on it) — sprints and trend values here come from the
+// SAME sorted+windowed data, so they can't drift out of alignment with each
+// other even if this employee has a gap somewhere in their history.
+export function patternsDataFrom(checkIns: EmployeeCheckIn[]): PatternsData {
+  const sorted = [...checkIns].sort((a, b) => a.sprint.order - b.sprint.order);
+  const windowed = sorted.slice(-PATTERN_WINDOW_SPRINTS);
+
+  const trendByDim = VITALS_DIMENSIONS.reduce<Record<string, number[]>>((acc, d) => {
+    acc[d.key] = windowed.map((c) => c[d.key]);
+    return acc;
+  }, {}) as Record<keyof HealthMetrics, number[]>;
+
+  return {
+    sprints: windowed.map((c) => c.sprintId),
+    trendByDim,
+  };
 }
 
 // Non-signal dimensions fall back to a plain S(first)->S(last) delta, colored
