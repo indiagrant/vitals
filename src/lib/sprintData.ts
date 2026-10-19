@@ -36,7 +36,7 @@ export function sprintDataFor(checkIns: EmployeeCheckIn[], sprintId: string): Sp
   };
 }
 
-function extractMetrics(c: EmployeeCheckIn): HealthMetrics {
+export function extractMetrics(c: EmployeeCheckIn): HealthMetrics {
   return {
     workLifeBalance: c.workLifeBalance,
     communication: c.communication,

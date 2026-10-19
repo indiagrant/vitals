@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { RatingRow } from "@/components/ui/RatingRow";
 import { Button } from "@/components/ui/Button";
-import { VITALS_DIMENSIONS } from "@/data/mockData";
-import { submitCheckIn, ApiError } from "@/lib/api";
+import { VITALS_DIMENSIONS, vitalsAvg } from "@/data/mockData";
+import { submitCheckIn, getEmployeeCheckIns, ApiError, type EmployeeCheckIn } from "@/lib/api";
+import { extractMetrics } from "@/lib/sprintData";
 import type { Employee, HealthMetrics } from "@/types";
 
 interface CheckInViewProps {
@@ -16,15 +17,46 @@ interface CheckInViewProps {
 
 const NOTE_LIMIT = 80;
 
+// A check-in's reflections can include richer seeded ones (tagged
+// "shipped", "workload", etc.) alongside what this form itself wrote —
+// only the latter is ever read back in for editing.
+function checkInNoteText(checkIn: EmployeeCheckIn, kind: "WIN" | "PAIN"): string {
+  return checkIn.reflections.find((r) => r.kind === kind && r.tag === "check-in")?.title ?? "";
+}
+
 export function CheckInView({ employee, sprint, onDone }: CheckInViewProps) {
+  // Whether this employee already has a check-in for this sprint — fetched
+  // once on load, so the page can show "already submitted" instead of the
+  // blank form, rather than letting every visit silently re-open it.
+  const [checkIns, setCheckIns] = useState<EmployeeCheckIn[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+
   const [ratings, setRatings] = useState<Partial<Record<keyof HealthMetrics, number>>>({});
   const [win, setWin] = useState("");
   const [pain, setPain] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const [finalScore, setFinalScore] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+    setCheckIns(null);
+    setLoadError(null);
+    getEmployeeCheckIns(employee.id)
+      .then((data) => {
+        if (!cancelled) setCheckIns(data);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setLoadError(err instanceof ApiError ? err.message : "Couldn't load your check-in status.");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [employee.id]);
+
+  const existingCheckIn = checkIns?.find((c) => c.sprintId === sprint) ?? null;
   const ratedCount = Object.keys(ratings).length;
   const allRated = ratedCount === VITALS_DIMENSIONS.length;
   const ratedValues = Object.values(ratings) as number[];
@@ -32,43 +64,50 @@ export function CheckInView({ employee, sprint, onDone }: CheckInViewProps) {
     ? ratedValues.reduce((s, v) => s + v, 0) / ratedValues.length
     : null;
 
+  function startEditing(checkIn: EmployeeCheckIn) {
+    setRatings(extractMetrics(checkIn));
+    setWin(checkInNoteText(checkIn, "WIN"));
+    setPain(checkInNoteText(checkIn, "PAIN"));
+    setSubmitError(null);
+    setEditing(true);
+  }
+
   async function handleSubmit() {
     // allRated gates the submit button, so every dimension key is present.
     const metrics = ratings as HealthMetrics;
     setSubmitting(true);
-    setError(null);
+    setSubmitError(null);
     try {
       await submitCheckIn(employee.id, sprint, metrics, win.trim(), pain.trim());
-      setFinalScore(runningAvg ?? 0);
-      setSubmitted(true);
+      // Resubmitting IS editing (same endpoint, replaces rather than
+      // accumulates) — refetch so the summary screen reflects it.
+      const fresh = await getEmployeeCheckIns(employee.id);
+      setCheckIns(fresh);
+      setEditing(false);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Couldn't save your check-in — please try again.");
+      setSubmitError(err instanceof ApiError ? err.message : "Couldn't save your check-in — please try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (submitted) {
+  if (loadError) {
+    return <p className="text-sm text-clay">{loadError}</p>;
+  }
+
+  if (!checkIns) {
+    return <p className="text-sm text-muted-foreground">Loading…</p>;
+  }
+
+  if (existingCheckIn && !editing) {
     return (
-      <div className="flex flex-col gap-5 items-start max-w-md">
-        <div className="size-11 rounded-full bg-sage-soft text-sage grid place-items-center">
-          <Check className="size-5" />
-        </div>
-        <h2 className="text-2xl font-semibold tracking-tight">Logged for Sprint {sprint.replace("S", "")}.</h2>
-        <p className="text-sm text-muted-foreground">
-          Thanks, {employee.name.split(" ")[0]}. This is what feeds your Sprint page — head there any
-          time to see the full picture.
-        </p>
-        <div className="flex items-baseline gap-2">
-          <span className="font-mono text-4xl font-semibold tabular-nums">{finalScore.toFixed(1)}</span>
-          <span className="font-mono text-xs uppercase tracking-[0.13em] text-muted-foreground">
-            Your check-in
-          </span>
-        </div>
-        <Button onClick={onDone} className="mt-1">
-          Go to your Sprint page
-        </Button>
-      </div>
+      <SubmittedSummary
+        employee={employee}
+        sprint={sprint}
+        score={vitalsAvg(extractMetrics(existingCheckIn))}
+        onEdit={() => startEditing(existingCheckIn)}
+        onDone={onDone}
+      />
     );
   }
 
@@ -76,7 +115,9 @@ export function CheckInView({ employee, sprint, onDone }: CheckInViewProps) {
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-2.5">
         <Eyebrow>Check-in · Sprint {sprint.replace("S", "")}</Eyebrow>
-        <h1 className="text-[34px] font-semibold tracking-tight">How was this sprint?</h1>
+        <h1 className="text-[34px] font-semibold tracking-tight">
+          {editing ? "Edit your check-in" : "How was this sprint?"}
+        </h1>
         <p className="text-sm text-muted-foreground">Six taps, two optional notes — about 90 seconds.</p>
       </div>
 
@@ -126,11 +167,55 @@ export function CheckInView({ employee, sprint, onDone }: CheckInViewProps) {
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center gap-3.5">
           <Button size="lg" disabled={!allRated || submitting} onClick={handleSubmit}>
-            {submitting ? "Submitting…" : "Submit check-in"}
+            {submitting ? "Submitting…" : editing ? "Save changes" : "Submit check-in"}
           </Button>
+          {editing && (
+            <Button variant="ghost" disabled={submitting} onClick={() => setEditing(false)}>
+              Cancel
+            </Button>
+          )}
           {!allRated && <span className="text-[12.5px] text-muted-foreground">Rate all six to submit</span>}
         </div>
-        {error && <p className="text-[12.5px] text-clay">{error}</p>}
+        {submitError && <p className="text-[12.5px] text-clay">{submitError}</p>}
+      </div>
+    </div>
+  );
+}
+
+function SubmittedSummary({
+  employee,
+  sprint,
+  score,
+  onEdit,
+  onDone,
+}: {
+  employee: Employee;
+  sprint: string;
+  score: number;
+  onEdit: () => void;
+  onDone: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-5 items-start max-w-md">
+      <div className="size-11 rounded-full bg-sage-soft text-sage grid place-items-center">
+        <Check className="size-5" />
+      </div>
+      <h2 className="text-2xl font-semibold tracking-tight">Logged for Sprint {sprint.replace("S", "")}.</h2>
+      <p className="text-sm text-muted-foreground">
+        Thanks, {employee.name.split(" ")[0]}. This is what feeds your Sprint page — head there any
+        time to see the full picture.
+      </p>
+      <div className="flex items-baseline gap-2">
+        <span className="font-mono text-4xl font-semibold tabular-nums">{score.toFixed(1)}</span>
+        <span className="font-mono text-xs uppercase tracking-[0.13em] text-muted-foreground">
+          Your check-in
+        </span>
+      </div>
+      <div className="flex items-center gap-3 mt-1">
+        <Button onClick={onDone}>Go to your Sprint page</Button>
+        <Button variant="outline" onClick={onEdit}>
+          Edit your check-in
+        </Button>
       </div>
     </div>
   );

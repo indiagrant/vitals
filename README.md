@@ -36,9 +36,23 @@ tracking `main` directly.
 ## Check-in form
 
 `pages/CheckInView.tsx` — the Employee "Check-in" data entry point. Captures
-the six dimensions plus wins/pains and writes the result back into
-`mockData.ts`'s in-memory store, which is what feeds the Sprint page's
-history for that employee.
+the six dimensions plus wins/pains and writes the result to the real
+backend (`POST /api/checkins`, see "Real persistence" below) — no longer
+an in-memory mock.
+
+On load, the page checks whether this employee already has a check-in for
+the current sprint. If so, it shows an "already submitted" summary (score,
+a link to the Sprint page) with an **Edit** button, instead of the blank
+rateable form — submitting twice doesn't silently re-open it. **Edit**
+reopens the same form, pre-filled with the existing ratings and
+previously-written win/pain text, and **Save changes** goes through the
+exact same endpoint as a first-time submission: it's an upsert keyed on
+`(employeeId, sprintId)`, so there's no separate "edit" route — a repeat
+submission *is* the edit. The one thing worth knowing if you're reading
+the API code: the backend only ever replaces reflections tagged
+`"check-in"` (what this form owns), never the richer seeded reflections
+(tagged `"shipped"`, `"workload"`, etc.) a check-in can also carry — a
+blanket replace would've silently destroyed those on every resubmission.
 
 ## Patterns page
 
@@ -253,21 +267,11 @@ system) — don't regenerate one from the CLI.
 - **Real persistence — in progress.** A real backend is being built:
   Node.js/Express (`server/`, deployed as a single Vercel serverless
   function via `api/index.ts`), PostgreSQL hosted on Supabase, Prisma as
-  the ORM (`prisma/schema.prisma`). Wired and verified so far: Check-in's
-  submit (writes to real Postgres, confirmed via the actual browser UI),
-  Sprint page (minus the ticket list — no tickets endpoint yet, a
-  deliberate gap), and Patterns page. History, Retro prep, and Team
-  overview still read `mockData.ts` unchanged. Being built in small,
-  independently-verified steps rather than all at once.
-- **Check-in should lock after submission, not silently re-upsert.**
-  Right now resubmitting Check-in for a sprint you've already done
-  overwrites the six scores *and keeps adding new win/pain rows every
-  time* (no replace, no cap) — confirmed directly while testing the real
-  write path. Fix: once a check-in exists for the current sprint, the
-  Check-in page should land in its "already submitted" state rather than
-  showing the rateable form again. Starting with a hard lock (simplest,
-  solves the duplication problem directly) rather than an edit-in-place
-  flow — revisit only if people actually need to correct a submitted
-  check-in often.
+  the ORM (`prisma/schema.prisma`). Wired and verified so far: Check-in
+  (submit + edit, see "Check-in form" above), Sprint page (minus the
+  ticket list — no tickets endpoint yet, a deliberate gap), and Patterns
+  page. History, Retro prep, and Team overview still read `mockData.ts`
+  unchanged. Being built in small, independently-verified steps rather
+  than all at once.
 - **Admin views** — Team overview is built; by-dimension, sprint-health, sentiment-trend, and settings are still placeholders
 - **Team initialization (admin)** — admin sets each team's retro cadence: a start date plus weekly/bi-weekly/monthly recurrence. Employees should get notified a few days before their check-in window opens. No team-creation flow exists yet; this depends on it.
