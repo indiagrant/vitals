@@ -26,8 +26,9 @@ const submitCheckInSchema = z.object({
 
 // POST /api/checkins — the real write path, replacing mockData.ts's
 // submitCheckIn(). Create-or-update: submitting again for the same
-// employee+sprint overwrites that sprint's scores (matches the old
-// mock behaviour) rather than erroring on the unique constraint.
+// employee+sprint overwrites that sprint's scores AND replaces its
+// win/pain (not accumulates) — this is also what powers Check-in's
+// edit flow, which just calls this same endpoint again.
 checkinsRouter.post("/", async (req, res) => {
   const parsed = submitCheckInSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -50,6 +51,15 @@ checkinsRouter.post("/", async (req, res) => {
     where: { employeeId_sprintId: { employeeId, sprintId } },
     update: { ...metrics },
     create: { employeeId, sprintId, ...metrics, prompts: [] },
+  });
+
+  // Replace, don't accumulate — but scoped to just the reflections this
+  // form owns (tag "check-in"). A check-in can also hold richer seeded
+  // reflections (tagged "shipped", "workload", etc.) that this form has
+  // nothing to do with; a blanket delete-all here would silently wipe
+  // those out on every resubmission/edit.
+  await prisma.reflection.deleteMany({
+    where: { checkInId: checkIn.id, tag: "check-in" },
   });
 
   const newReflections = [
