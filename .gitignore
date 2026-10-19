@@ -12,6 +12,14 @@ dist-ssr
 coverage
 *.local
 
+# Environment variables (real secrets) — never commit these
+.env
+.env.*
+!.env.example
+
+# Prisma Client — generated code, regenerated from prisma/schema.prisma
+/generated
+
 # Editor
 .vscode/*
 !.vscode/extensions.json

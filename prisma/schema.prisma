@@ -1,0 +1,128 @@
+// Prisma schema — the single source of truth for your database structure.
+// Docs: https://pris.ly/d/prisma-schema
+//
+// Note: as of Prisma 7, the connection URL lives in `prisma.config.ts`,
+// not here — this file just describes what the database *looks like*
+// (models/tables) and which SQL dialect we're using.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Scope note ─────────────────────────────────────────────────────────
+// This first schema covers Employee, Sprint, CheckIn, Reflection, and
+// Ticket — what Check-in writes and History/Sprint read. Team overview
+// (partly synthetic — see mockData.ts) and Retro prep (pure client state
+// today) are deliberately out of scope for this pass; each needs its own
+// design decision later, not a quick bolt-on here.
+
+model Employee {
+  id        String  @id // e.g. "E001" — kept as a string to match existing ids
+  name      String
+  role      String
+  initials  String
+  tenure    String
+  isAdmin   Boolean @default(false)
+
+  checkIns  CheckIn[]
+  tickets   Ticket[]
+}
+
+model Sprint {
+  id    String @id // e.g. "S24" — the sprint code, used as its own key
+  label String      // e.g. "Aug 19 → Sep 1" (from SPRINT_DATES)
+  order Int         // explicit chronological order — don't rely on parsing
+
+  checkIns CheckIn[]
+  tickets  Ticket[]
+}
+
+// One employee's six-dimension scores + open prompts, for one sprint.
+// Replaces VITALS_SURVEYS plus the `prompts` part of EmployeeReflection.
+model CheckIn {
+  id         Int    @id @default(autoincrement())
+
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String
+
+  sprint     Sprint @relation(fields: [sprintId], references: [id])
+  sprintId   String
+
+  // The six HealthMetrics dimensions — flattened to columns rather than a
+  // separate per-dimension table, since the app always reads/writes all
+  // six together as one object (matches src/types/index.ts's HealthMetrics).
+  workLifeBalance   Int
+  communication     Int
+  managerSupport    Int
+  teamCollaboration Int
+  workload          Int
+  jobSatisfaction   Int
+
+  // Postgres supports native arrays — no separate table needed for a
+  // simple list of strings with no other fields of their own.
+  prompts String[]
+
+  reflections Reflection[]
+
+  // One check-in per employee per sprint — enforced by the database itself,
+  // not just application code.
+  @@unique([employeeId, sprintId])
+}
+
+enum ReflectionKind {
+  WIN
+  PAIN
+}
+
+// Replaces the wins[]/pains[] arrays inside EmployeeReflection — one row
+// per win or pain, distinguished by `kind` instead of two separate arrays.
+model Reflection {
+  id        Int            @id @default(autoincrement())
+
+  checkIn   CheckIn        @relation(fields: [checkInId], references: [id])
+  checkInId Int
+
+  kind      ReflectionKind
+  tag       String
+  title     String
+  detail    String
+}
+
+enum TicketStatus {
+  DONE
+  IN_PROGRESS
+  BLOCKED
+  CARRIED_OVER
+}
+
+enum TicketType {
+  FEATURE
+  BUG
+  CHORE
+  SPIKE
+  RFC
+  PERF
+  INCIDENT
+}
+
+model Ticket {
+  id         String       @id // natural id, e.g. "PLT-101" — already unique
+  title      String
+  status     TicketStatus
+  estimate   Int
+  actual     Int
+  points     Int
+  type       TicketType
+  note       String
+
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String
+
+  sprint     Sprint @relation(fields: [sprintId], references: [id])
+  sprintId   String
+}
