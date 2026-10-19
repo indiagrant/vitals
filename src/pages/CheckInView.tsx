@@ -4,7 +4,8 @@ import { cn } from "@/lib/utils";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { RatingRow } from "@/components/ui/RatingRow";
 import { Button } from "@/components/ui/Button";
-import { VITALS_DIMENSIONS, submitCheckIn } from "@/data/mockData";
+import { VITALS_DIMENSIONS } from "@/data/mockData";
+import { submitCheckIn, ApiError } from "@/lib/api";
 import type { Employee, HealthMetrics } from "@/types";
 
 interface CheckInViewProps {
@@ -21,6 +22,8 @@ export function CheckInView({ employee, sprint, onDone }: CheckInViewProps) {
   const [pain, setPain] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const ratedCount = Object.keys(ratings).length;
   const allRated = ratedCount === VITALS_DIMENSIONS.length;
@@ -29,12 +32,20 @@ export function CheckInView({ employee, sprint, onDone }: CheckInViewProps) {
     ? ratedValues.reduce((s, v) => s + v, 0) / ratedValues.length
     : null;
 
-  function handleSubmit() {
+  async function handleSubmit() {
     // allRated gates the submit button, so every dimension key is present.
     const metrics = ratings as HealthMetrics;
-    submitCheckIn(employee.id, sprint, metrics, win.trim(), pain.trim());
-    setFinalScore(runningAvg ?? 0);
-    setSubmitted(true);
+    setSubmitting(true);
+    setError(null);
+    try {
+      await submitCheckIn(employee.id, sprint, metrics, win.trim(), pain.trim());
+      setFinalScore(runningAvg ?? 0);
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Couldn't save your check-in — please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -112,11 +123,14 @@ export function CheckInView({ employee, sprint, onDone }: CheckInViewProps) {
         />
       </div>
 
-      <div className="flex items-center gap-3.5">
-        <Button size="lg" disabled={!allRated} onClick={handleSubmit}>
-          Submit check-in
-        </Button>
-        {!allRated && <span className="text-[12.5px] text-muted-foreground">Rate all six to submit</span>}
+      <div className="flex flex-col gap-2.5">
+        <div className="flex items-center gap-3.5">
+          <Button size="lg" disabled={!allRated || submitting} onClick={handleSubmit}>
+            {submitting ? "Submitting…" : "Submit check-in"}
+          </Button>
+          {!allRated && <span className="text-[12.5px] text-muted-foreground">Rate all six to submit</span>}
+        </div>
+        {error && <p className="text-[12.5px] text-clay">{error}</p>}
       </div>
     </div>
   );
