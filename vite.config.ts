@@ -11,6 +11,15 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    // Forward /api/* to the local Express server (run separately via
+    // `npm run dev:server`) instead of Vite trying to handle it itself.
+    // Keeps the browser's view same-origin, matching how production
+    // (one Vercel deployment serving both) actually behaves.
+    proxy: {
+      "/api": "http://localhost:3001",
+    },
+  },
   test: {
     environment: "jsdom",
     globals: true,
