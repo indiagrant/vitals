@@ -11,6 +11,17 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client.js";
 
-const adapter = new PrismaPg(process.env.DATABASE_URL!);
+// Fail loudly at startup rather than letting pg silently fall back to its
+// default of 127.0.0.1:5432 — which surfaces much later, per-request, as a
+// misleading "Can't reach database server" error (exactly what happened
+// on Vercel before DATABASE_URL was added to its environment variables).
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error(
+    "DATABASE_URL is not set. Locally, add it to .env; on Vercel, add it under Settings → Environment Variables and redeploy.",
+  );
+}
+
+const adapter = new PrismaPg(databaseUrl);
 
 export const prisma = new PrismaClient({ adapter });
