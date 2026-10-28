@@ -85,7 +85,7 @@ export function CheckInView({ employee, sprint, onDone }: CheckInViewProps) {
       setCheckIns(fresh);
       setEditing(false);
     } catch (err) {
-      setSubmitError(err instanceof ApiError ? err.message : "Couldn't save your check-in — please try again.");
+      setSubmitError(err instanceof ApiError ? err.message : "Couldn't save your check-in. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -118,7 +118,7 @@ export function CheckInView({ employee, sprint, onDone }: CheckInViewProps) {
         <h1 className="text-[34px] font-semibold tracking-tight">
           {editing ? "Edit your check-in" : "How was this sprint?"}
         </h1>
-        <p className="text-sm text-muted-foreground">Six taps, two optional notes — about 90 seconds.</p>
+        <p className="text-sm text-muted-foreground">Six taps, two optional notes. About 90 seconds.</p>
       </div>
 
       <div className="flex flex-col gap-7">
@@ -202,7 +202,7 @@ function SubmittedSummary({
       </div>
       <h2 className="text-2xl font-semibold tracking-tight">Logged for Sprint {sprint.replace("S", "")}.</h2>
       <p className="text-sm text-muted-foreground">
-        Thanks, {employee.name.split(" ")[0]}. This is what feeds your Sprint page — head there any
+        Thanks, {employee.name.split(" ")[0]}. This is what feeds your Sprint page. Head there any
         time to see the full picture.
       </p>
       <div className="flex items-baseline gap-2">

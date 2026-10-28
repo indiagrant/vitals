@@ -121,7 +121,7 @@ describe("CheckInView", () => {
     await rateAllSix(user);
     await user.click(screen.getByRole("button", { name: "Submit check-in" }));
 
-    expect(await screen.findByText("Couldn't save your check-in — please try again.")).toBeInTheDocument();
+    expect(await screen.findByText("Couldn't save your check-in. Please try again.")).toBeInTheDocument();
   });
 
   describe("when a check-in already exists for this sprint", () => {

@@ -90,7 +90,7 @@ export function PatternsView({ employee }: PatternsViewProps) {
           {headline}
         </h1>
         <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
-          A look back across your last {sprints.length} check-ins — not a new score, just what repeated.
+          A look back across your last {sprints.length} check-ins. Not a new score, just what repeated.
           {signals.length > 0 && " Click a card to see its shape across the full stretch."}
         </p>
       </div>
