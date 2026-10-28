@@ -47,6 +47,6 @@ export function extractMetrics(c: EmployeeCheckIn): HealthMetrics {
   };
 }
 
-function toReflection(r: EmployeeCheckIn["reflections"][number]): Reflection {
+export function toReflection(r: EmployeeCheckIn["reflections"][number]): Reflection {
   return { tag: r.tag, title: r.title, detail: r.detail };
 }

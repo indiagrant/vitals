@@ -1,13 +1,7 @@
-import {
-  SPRINT_DATES,
-  VITALS_DIMENSIONS,
-  VITALS_SPRINTS,
-  VITALS_SURVEYS,
-  vitalsAvg,
-  vitalsReflection,
-  vitalsTickets,
-} from "@/data/mockData";
+import { VITALS_DIMENSIONS, vitalsAvg } from "@/data/mockData";
 import { headlineForScore } from "@/lib/headline";
+import { extractMetrics, toReflection } from "@/lib/sprintData";
+import type { EmployeeCheckIn } from "@/lib/api";
 import type { Tone } from "@/lib/teamPulse";
 import type { HealthMetrics, Reflection, Ticket } from "@/types";
 
@@ -76,61 +70,43 @@ function buildSynopsis(moods: number[], prevMoods: number[] | null): string {
   return "Nothing moved much — every dimension held where it was.";
 }
 
-export function buildHistoryEntry(empId: string, sprint: string): HistoryEntry | null {
-  const metrics = VITALS_SURVEYS[empId]?.[sprint];
-  if (!metrics) return null;
+// Builds the journal from one employee's real check-in history (the same
+// GET /api/employees/:id/checkins payload Sprint and Patterns use).
+// "Previous sprint" means this employee's previous check-in by
+// Sprint.order — the same rule as sprintDataFor(), so a sprint's synopsis
+// here and its deltas on the Sprint page always compare against the same
+// baseline.
+//
+// Tickets are injected rather than read from the check-ins: there's no
+// tickets endpoint yet, so the caller still supplies them from mockData.ts
+// — a deliberate, flagged gap (same as the Sprint page's TicketList), and
+// swapping in a real source later only touches the call site.
+//
+// Newest first, matching the journal's reading order.
+export function historyEntriesFrom(
+  checkIns: EmployeeCheckIn[],
+  ticketsFor: (sprintId: string) => Ticket[],
+): HistoryEntry[] {
+  const sorted = [...checkIns].sort((a, b) => a.sprint.order - b.sprint.order);
 
-  const moods = toMoods(metrics);
+  return sorted
+    .map((c, idx) => {
+      const metrics = extractMetrics(c);
+      const moods = toMoods(metrics);
+      const prevMoods = idx > 0 ? toMoods(extractMetrics(sorted[idx - 1])) : null;
 
-  const idx = (VITALS_SPRINTS as readonly string[]).indexOf(sprint);
-  const prevSprint = idx > 0 ? VITALS_SPRINTS[idx - 1] : null;
-  const prevMetrics = prevSprint ? VITALS_SURVEYS[empId]?.[prevSprint] : undefined;
-  const prevMoods = prevMetrics ? toMoods(prevMetrics) : null;
-
-  const reflection = vitalsReflection(empId, sprint);
-
-  return {
-    sprint,
-    dates: SPRINT_DATES[sprint] ?? "",
-    moods,
-    tone: entryTone(moods),
-    title: headlineForScore(vitalsAvg(metrics)).line,
-    synopsis: buildSynopsis(moods, prevMoods),
-    wins: reflection?.wins ?? [],
-    pains: reflection?.pains ?? [],
-    tickets: vitalsTickets(empId, sprint),
-    prompts: reflection?.prompts ?? [],
-  };
-}
-
-// Newest first, matching the journal's reading order — the reverse of
-// VITALS_SPRINTS/vitalsTrend's chronological (oldest-first) order.
-export function buildHistoryEntries(empId: string): HistoryEntry[] {
-  return [...VITALS_SPRINTS]
-    .reverse()
-    .map((sprint) => buildHistoryEntry(empId, sprint))
-    .filter((entry): entry is HistoryEntry => entry !== null);
-}
-
-// A prompt asked in two or more sprints — "worth asking again" is more
-// telling than any single sprint's prompt list on its own.
-export function findRecurringPrompt(entries: HistoryEntry[]): { prompt: string; sprints: string[] } | null {
-  const bySprints = new Map<string, string[]>();
-  // entries is newest-first; iterate oldest-first so the recorded sprint
-  // order in the result reads chronologically.
-  [...entries].reverse().forEach((entry) => {
-    entry.prompts.forEach((prompt) => {
-      const sprints = bySprints.get(prompt) ?? [];
-      sprints.push(entry.sprint);
-      bySprints.set(prompt, sprints);
-    });
-  });
-
-  let best: { prompt: string; sprints: string[] } | null = null;
-  bySprints.forEach((sprints, prompt) => {
-    if (sprints.length >= 2 && (!best || sprints.length > best.sprints.length)) {
-      best = { prompt, sprints };
-    }
-  });
-  return best;
+      return {
+        sprint: c.sprintId,
+        dates: c.sprint.label,
+        moods,
+        tone: entryTone(moods),
+        title: headlineForScore(vitalsAvg(metrics)).line,
+        synopsis: buildSynopsis(moods, prevMoods),
+        wins: c.reflections.filter((r) => r.kind === "WIN").map(toReflection),
+        pains: c.reflections.filter((r) => r.kind === "PAIN").map(toReflection),
+        tickets: ticketsFor(c.sprintId),
+        prompts: c.prompts,
+      };
+    })
+    .reverse();
 }

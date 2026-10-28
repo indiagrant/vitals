@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
-import { Search, Star, ChevronRight, History as HistoryIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search, Star, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { VITALS_DIMENSIONS } from "@/data/mockData";
-import { buildHistoryEntries, findRecurringPrompt, dimensionTone } from "@/lib/history";
+import { VITALS_DIMENSIONS, vitalsTickets } from "@/data/mockData";
+import { getEmployeeCheckIns, ApiError, type EmployeeCheckIn } from "@/lib/api";
+import { historyEntriesFrom, dimensionTone } from "@/lib/history";
 import type { HistoryEntry } from "@/lib/history";
 import type { Employee, TicketStatus } from "@/types";
 
@@ -56,11 +57,55 @@ function entryMatchesSearch(entry: HistoryEntry, query: string): boolean {
  * pains, tickets, prompts), not a stats/chart surface. Deliberately
  * non-overlapping with Patterns (cross-sprint dimension shape) — see
  * CLAUDE.md "Patterns page" for the full boundary.
+ *
+ * Scores, wins/pains, and prompts come from the real API. Tickets still
+ * come from mockData.ts — no tickets endpoint yet, the same deliberate,
+ * flagged gap as the Sprint page's TicketList.
  */
 export function HistoryView({ employee }: HistoryViewProps) {
-  const entries = useMemo(() => buildHistoryEntries(employee.id), [employee.id]);
-  const recurring = useMemo(() => findRecurringPrompt(entries), [entries]);
+  const [checkIns, setCheckIns] = useState<EmployeeCheckIn[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+    setCheckIns(null);
+    setError(null);
+    getEmployeeCheckIns(employee.id)
+      .then((data) => {
+        if (!cancelled) setCheckIns(data);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof ApiError ? err.message : "Couldn't load your history.");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [employee.id]);
+
+  const entries = useMemo(
+    () => (checkIns ? historyEntriesFrom(checkIns, (sprintId) => vitalsTickets(employee.id, sprintId)) : null),
+    [checkIns, employee.id],
+  );
+
+  if (error) {
+    return <p className="text-sm text-clay">{error}</p>;
+  }
+
+  if (!entries) {
+    return <p className="text-sm text-muted-foreground">Loading…</p>;
+  }
+
+  // Keyed by employee so switching users resets expanded/starred/search
+  // state rather than carrying one person's UI state over to another's.
+  return <HistoryJournal key={employee.id} entries={entries} />;
+}
+
+// Split out from HistoryView so its state initializers (e.g. "newest entry
+// starts expanded") run once real entries exist, not on an empty first
+// render while the fetch is still in flight.
+function HistoryJournal({ entries }: { entries: HistoryEntry[] }) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(entries[0] ? [entries[0].sprint] : []));
   const [starred, setStarred] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
@@ -115,7 +160,6 @@ export function HistoryView({ employee }: HistoryViewProps) {
           <LegendItem tone="sage" label="Thriving" />
           <LegendItem tone="neutral" label="Steady" />
           <LegendItem tone="clay" label="Struggling" />
-          <span className="opacity-80">— one per dimension, in order. Hover a dot for which.</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 pt-1">
@@ -148,21 +192,6 @@ export function HistoryView({ employee }: HistoryViewProps) {
           </div>
         </div>
       </div>
-
-      {recurring && (
-        <div className="flex max-w-2xl items-start gap-3.5 rounded-2xl border border-dashed border-border bg-card p-[1.125rem]">
-          <HistoryIcon className="mt-0.5 size-[15px] shrink-0 text-gold" />
-          <div className="flex flex-col gap-1">
-            <span className="font-mono text-[10.5px] tracking-[0.08em] text-muted-foreground uppercase">
-              Worth asking again
-            </span>
-            <p className="text-[17px] leading-snug font-medium">"{recurring.prompt}"</p>
-            <span className="text-xs text-muted-foreground">
-              You were asked this in {recurring.sprints.join(" and ")} — seems to keep coming up.
-            </span>
-          </div>
-        </div>
-      )}
 
       <nav aria-label="Jump to sprint" className="flex flex-wrap items-center gap-2">
         {entries.map((entry) => (

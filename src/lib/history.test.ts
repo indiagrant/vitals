@@ -1,5 +1,6 @@
-import { dimensionTone, entryTone, findRecurringPrompt } from "./history";
-import type { HistoryEntry } from "./history";
+import { dimensionTone, entryTone, historyEntriesFrom } from "./history";
+import type { EmployeeCheckIn } from "./api";
+import type { Ticket } from "@/types";
 
 describe("dimensionTone", () => {
   it("is sage at and above 4", () => {
@@ -31,100 +32,109 @@ describe("entryTone", () => {
   });
 });
 
-describe("findRecurringPrompt", () => {
-  function entry(sprint: string, prompts: string[]): HistoryEntry {
+// historyEntriesFrom is pure — it takes the API payload and a tickets
+// lookup as plain params, so no mockData isolation dance is needed here.
+describe("historyEntriesFrom", () => {
+  // Dimension order: bal, comm, support, collab, workload, satisfaction.
+  function checkIn(
+    sprintId: string,
+    order: number,
+    scores: [number, number, number, number, number, number],
+    extras: Partial<Pick<EmployeeCheckIn, "prompts" | "reflections">> = {},
+  ): EmployeeCheckIn {
+    const [workLifeBalance, communication, managerSupport, teamCollaboration, workload, jobSatisfaction] = scores;
     return {
-      sprint,
-      dates: "",
-      moods: [3, 3, 3, 3, 3, 3],
-      tone: "neutral",
-      title: "",
-      synopsis: "",
-      wins: [],
-      pains: [],
-      tickets: [],
-      prompts,
+      id: order,
+      employeeId: "E001",
+      sprintId,
+      workLifeBalance,
+      communication,
+      managerSupport,
+      teamCollaboration,
+      workload,
+      jobSatisfaction,
+      prompts: extras.prompts ?? [],
+      reflections: extras.reflections ?? [],
+      sprint: { id: sprintId, label: `${sprintId} dates`, order },
     };
   }
 
-  it("finds a prompt repeated across two entries, reporting sprints oldest-first", () => {
-    // Input is newest-first, matching buildHistoryEntries' order.
-    const entries = [
-      entry("S22", ["Repeat me"]),
-      entry("S21", ["Something else"]),
-      entry("S20", ["Repeat me"]),
-    ];
-    expect(findRecurringPrompt(entries)).toEqual({ prompt: "Repeat me", sprints: ["S20", "S22"] });
+  function reflection(kind: "WIN" | "PAIN", title: string): EmployeeCheckIn["reflections"][number] {
+    return { id: 0, checkInId: 0, kind, tag: "shipped", title, detail: "" };
+  }
+
+  const noTickets = () => [];
+
+  it("maps a check-in to an entry: moods in dimension order, wins/pains split by kind, prompts, label as dates", () => {
+    const [entry] = historyEntriesFrom(
+      [
+        checkIn("S23", 3, [3, 4, 3, 4, 2, 3], {
+          prompts: ["A prompt"],
+          reflections: [reflection("WIN", "A win"), reflection("PAIN", "A pain")],
+        }),
+      ],
+      noTickets,
+    );
+    expect(entry.moods).toEqual([3, 4, 3, 4, 2, 3]);
+    expect(entry.dates).toBe("S23 dates");
+    expect(entry.wins).toEqual([{ tag: "shipped", title: "A win", detail: "" }]);
+    expect(entry.pains).toEqual([{ tag: "shipped", title: "A pain", detail: "" }]);
+    expect(entry.prompts).toEqual(["A prompt"]);
+    expect(entry.tone).toBe("clay"); // workload at 2
   });
 
-  it("picks the prompt with the most repeats when several recur", () => {
-    const entries = [
-      entry("S23", ["A", "B"]),
-      entry("S22", ["B"]),
-      entry("S21", ["A"]),
-      entry("S20", ["A"]),
-    ];
-    expect(findRecurringPrompt(entries)?.prompt).toBe("A");
-    expect(findRecurringPrompt(entries)?.sprints).toEqual(["S20", "S21", "S23"]);
+  it("fills tickets from the injected lookup, per sprint", () => {
+    const ticket: Ticket = {
+      id: "PLT-1",
+      title: "A ticket",
+      status: "done",
+      estimate: 1,
+      actual: 1,
+      points: 1,
+      type: "feature",
+      note: "",
+    };
+    const entries = historyEntriesFrom([checkIn("S20", 0, [3, 3, 3, 3, 3, 3]), checkIn("S21", 1, [3, 3, 3, 3, 3, 3])], (id) =>
+      id === "S21" ? [ticket] : [],
+    );
+    expect(entries.find((e) => e.sprint === "S21")!.tickets).toEqual([ticket]);
+    expect(entries.find((e) => e.sprint === "S20")!.tickets).toEqual([]);
   });
 
-  it("returns null when no prompt repeats", () => {
-    const entries = [entry("S21", ["One"]), entry("S20", ["Two"])];
-    expect(findRecurringPrompt(entries)).toBeNull();
+  it("returns entries newest first, by sprint order rather than input order", () => {
+    const entries = historyEntriesFrom(
+      [checkIn("S22", 2, [3, 3, 3, 3, 3, 3]), checkIn("S20", 0, [3, 3, 3, 3, 3, 3]), checkIn("S21", 1, [3, 3, 3, 3, 3, 3])],
+      noTickets,
+    );
+    expect(entries.map((e) => e.sprint)).toEqual(["S22", "S21", "S20"]);
   });
 
-  it("returns null for an empty entry list", () => {
-    expect(findRecurringPrompt([])).toBeNull();
-  });
-});
-
-// buildHistoryEntry/buildHistoryEntries read live mockData state — reset the
-// module registry before every test, and re-import history.ts itself too
-// (it statically imports mockData, so it would otherwise close over the
-// stale pre-reset instance). See CLAUDE.md "Testing".
-describe("buildHistoryEntry / buildHistoryEntries", () => {
-  let mockData: typeof import("@/data/mockData");
-  let history: typeof import("./history");
-
-  beforeEach(async () => {
-    vi.resetModules();
-    mockData = await import("@/data/mockData");
-    history = await import("./history");
-  });
-
-  it("builds an entry with moods in VITALS_DIMENSIONS order and real wins/pains/tickets/prompts", () => {
-    const entry = history.buildHistoryEntry("E001", "S23");
-    expect(entry).not.toBeNull();
-    expect(entry!.moods).toEqual([3, 4, 3, 4, 2, 3]); // E001 S23: bal, comm, support, collab, workload, satisfaction
-    expect(entry!.wins).toEqual(mockData.VITALS_REFLECTIONS.E001.S23.wins);
-    expect(entry!.pains).toEqual(mockData.VITALS_REFLECTIONS.E001.S23.pains);
-    expect(entry!.tickets).toEqual(mockData.VITALS_TICKETS.E001.S23);
-    expect(entry!.prompts).toEqual(mockData.VITALS_REFLECTIONS.E001.S23.prompts);
-  });
-
-  it("names the dimension that moved most since the previous sprint in the synopsis", () => {
-    // E001 S22->S23: managerSupport and jobSatisfaction both drop 4->3;
+  it("names the dimension that moved most since the previous check-in in the synopsis", () => {
+    // S22->S23: managerSupport and jobSatisfaction both drop 4->3;
     // managerSupport comes first in VITALS_DIMENSIONS order and wins the tie.
-    const entry = history.buildHistoryEntry("E001", "S23");
-    expect(entry!.synopsis).toContain("Manager support");
-    expect(entry!.synopsis).toContain("3");
+    const [latest] = historyEntriesFrom(
+      [checkIn("S22", 2, [3, 4, 4, 4, 2, 4]), checkIn("S23", 3, [3, 4, 3, 4, 2, 3])],
+      noTickets,
+    );
+    expect(latest.synopsis).toContain("Manager support");
+    expect(latest.synopsis).toContain("3");
   });
 
-  it("falls back to a lead/lag synopsis for the first sprint, with no previous sprint to diff against", () => {
-    const entry = history.buildHistoryEntry("E001", "S20");
-    expect(entry!.synopsis).toMatch(/led at|landed at/);
+  it("diffs against the employee's previous check-in even when a sprint in between is missing", () => {
+    // No S21 check-in — S22 compares against S20, not against nothing.
+    const [latest] = historyEntriesFrom(
+      [checkIn("S20", 0, [3, 3, 3, 3, 3, 3]), checkIn("S22", 2, [3, 3, 3, 3, 5, 3])],
+      noTickets,
+    );
+    expect(latest.synopsis).toBe("Workload climbed to 5 — the clearest move this sprint.");
   });
 
-  it("returns null for an unknown employee id", () => {
-    expect(history.buildHistoryEntry("nope", "S24")).toBeNull();
+  it("falls back to a lead/lag synopsis for the first check-in, with nothing to diff against", () => {
+    const [entry] = historyEntriesFrom([checkIn("S20", 0, [4, 5, 4, 5, 4, 5])], noTickets);
+    expect(entry.synopsis).toMatch(/led at|landed at/);
   });
 
-  it("returns null for a known employee but unseeded sprint", () => {
-    expect(history.buildHistoryEntry("E001", "S99")).toBeNull();
-  });
-
-  it("returns all five seeded sprints, newest first", () => {
-    const entries = history.buildHistoryEntries("E001");
-    expect(entries.map((e) => e.sprint)).toEqual(["S24", "S23", "S22", "S21", "S20"]);
+  it("returns an empty list for an employee with no check-ins", () => {
+    expect(historyEntriesFrom([], noTickets)).toEqual([]);
   });
 });

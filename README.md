@@ -108,10 +108,17 @@ Entries lay out in a two-column CSS-columns masonry so cards of very
 different expanded heights sit side by side without gaps. A sprint-jump
 strip, free-text search (matches wins/pains/tickets/prompts, auto-expanding
 hits), and filter chips (dim non-matching sections rather than hiding
-structure) sit above the grid. A "Worth asking again" callout
-(`findRecurringPrompt`) resurfaces any prompt asked in two or more sprints.
-Each entry has a gold star to flag it for retro — a lightweight bookmark,
+structure) sit above the grid. Each entry has a gold star to flag it for retro — a lightweight bookmark,
 purely client-side state, not Retro prep's board.
+
+Data comes from the real API — the same `GET /api/employees/:id/checkins`
+call Sprint and Patterns use, turned into journal entries by
+`historyEntriesFrom()` in `lib/history.ts`. A sprint's synopsis compares
+against the employee's *previous check-in* (by sprint order), the same
+baseline the Sprint page's deltas use, so the two pages never disagree
+about what moved. Ticket chips are the one exception: there's no tickets
+endpoint yet, so they still come from `mockData.ts` (the same flagged gap
+as the Sprint page's ticket list).
 
 `VITALS_REFLECTIONS` and `VITALS_TICKETS` in `mockData.ts` are sprint-keyed
 (matching `VITALS_SURVEYS`) specifically so History can read every sprint,
@@ -268,10 +275,11 @@ system) — don't regenerate one from the CLI.
   Node.js/Express (`server/`, deployed as a single Vercel serverless
   function via `api/index.ts`), PostgreSQL hosted on Supabase, Prisma as
   the ORM (`prisma/schema.prisma`). Wired and verified so far: Check-in
-  (submit + edit, see "Check-in form" above), Sprint page (minus the
-  ticket list — no tickets endpoint yet, a deliberate gap), and Patterns
-  page. History, Retro prep, and Team overview still read `mockData.ts`
-  unchanged. Being built in small, independently-verified steps rather
-  than all at once.
+  (submit + edit, see "Check-in form" above), Sprint page, Patterns page,
+  and History page. Tickets have no endpoint yet, so the ticket lists on
+  Sprint and History still read `mockData.ts` (a deliberate gap, and a
+  tickets endpoint would close both at once). Retro prep and Team
+  overview still read `mockData.ts` unchanged. Being built in small,
+  independently-verified steps rather than all at once.
 - **Admin views** — Team overview is built; by-dimension, sprint-health, sentiment-trend, and settings are still placeholders
 - **Team initialization (admin)** — admin sets each team's retro cadence: a start date plus weekly/bi-weekly/monthly recurrence. Employees should get notified a few days before their check-in window opens. No team-creation flow exists yet; this depends on it.
